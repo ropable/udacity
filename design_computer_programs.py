@@ -7,6 +7,29 @@ CS212 Design of Computer Programs
 UNIT 1 scripts
 -----------------------------------------------------------------
 '''
+import random
+# Generate a standard deck of cards.
+std_deck = [r+s for r in '23456789TJQKA' for s in 'SHDC']
+
+def deal(numhands, n=5, deck=std_deck):
+    "Shuffle the desk and deal out numhands n-card hands."
+    # My solution
+    if numhands < 1:
+        raise Exception('Number of hands must be greater than 0.')
+    random.shuffle(deck) # Shuffle the deck of cards.
+    return [deck[n*i:n*(i+1)] for i in range(numhands)]
+    hands = []
+    for i in range(numhands):
+        # We're not handling the case of running out of cards just yet.
+        hand = []
+        for j in range(n):
+            hand.append(deck.pop())
+        hands.append(hand)
+    return hands
+    # Instructor solution
+    #random.shuffle(deck)
+    #return [deck[n*i:n*(i+1)] for i in range(numhands)]
+    
 def poker(hands):
     "Return a list of winning hands: poker([hand,...]) => [hand,...]"
     return allmax(hands, key=hand_rank)
