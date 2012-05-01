@@ -245,14 +245,6 @@ def test():
 # Write a function floor_puzzle() that returns a list of
 # five floor numbers denoting the floor of Hopper, Kay,
 # Liskov, Perlis, and Ritchie.
-
-def top_floor():
-    pass
-
-def bottom_floor():
-    pass
-
-
 def floor_puzzle():
     all_perms = list(itertools.permutations(['Hopper', 'Kay', 'Liskov', 'Perlis', 'Ritchie']))
     perms = []
@@ -260,7 +252,14 @@ def floor_puzzle():
         if i[4] != 'Hopper' and i[0] != 'Kay' and (i[0] != 'Liskov' and i[4] != 'Liskov'):
             perms.append(i) # Limit the permutations to ~30.
     for i in perms:
-        if (i.index('Perlis') > i.index('Kay')) and (abs(i.index('Ritchie')-i.index('Liskov')) != 1)
-            and (abs(i.index('Liskov')-i.index('Kay')) != 1):
-            return i
+        if (i.index('Perlis') > i.index('Kay')) and (abs(i.index('Ritchie')-i.index('Liskov')) != 1) and (abs(i.index('Liskov')-i.index('Kay')) != 1):
+            result = list(i)
+    # Turn result into a list of floor numbers.
+    floor_nos = []
+    floor_nos.append(result.index('Hopper'))
+    floor_nos.append(result.index('Kay'))
+    floor_nos.append(result.index('Liskov'))
+    floor_nos.append(result.index('Perlis'))
+    floor_nos.append(result.index('Ritchie'))
+    return floor_nos
     #return [1, 2, 3, 4, 5] or [0, 1, 2, 3, 4]
