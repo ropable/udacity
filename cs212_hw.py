@@ -224,3 +224,43 @@ def test():
     assert faster_solve('YOU == ME**2') == ('289 == 17**2' or '576 == 24**2' or '841 == 29**2')
     assert faster_solve('X / X == X') == '1 / 1 == 1'
     return 'tests pass'
+
+# CS 212, hw2-2: Floor puzzle
+
+#------------------
+# User Instructions
+#
+# Hopper, Kay, Liskov, Perlis, and Ritchie live on
+# different floors of a five-floor apartment building.
+#
+# Hopper does not live on the top floor.
+# Kay does not live on the bottom floor.
+# Liskov does not live on either the top or the bottom floor.
+# Perlis lives on a higher floor than does Kay.
+# Ritchie does not live on a floor adjacent to Liskov's.
+# Liskov does not live on a floor adjacent to Kay's.
+#
+# Where does everyone live?
+#
+# Write a function floor_puzzle() that returns a list of
+# five floor numbers denoting the floor of Hopper, Kay,
+# Liskov, Perlis, and Ritchie.
+
+def top_floor():
+    pass
+
+def bottom_floor():
+    pass
+
+
+def floor_puzzle():
+    all_perms = list(itertools.permutations(['Hopper', 'Kay', 'Liskov', 'Perlis', 'Ritchie']))
+    perms = []
+    for i in all_perms:
+        if i[4] != 'Hopper' and i[0] != 'Kay' and (i[0] != 'Liskov' and i[4] != 'Liskov'):
+            perms.append(i) # Limit the permutations to ~30.
+    for i in perms:
+        if (i.index('Perlis') > i.index('Kay')) and (abs(i.index('Ritchie')-i.index('Liskov')) != 1)
+            and (abs(i.index('Liskov')-i.index('Kay')) != 1):
+            return i
+    #return [1, 2, 3, 4, 5] or [0, 1, 2, 3, 4]
