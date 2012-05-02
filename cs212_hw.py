@@ -146,7 +146,7 @@ def test_best_hand():
             == ['7C', '7D', '7H', '7S', 'JD'])
     return 'test_best_hand passes'
 
-print test_best_hand()
+#print test_best_hand()
 
 def test_best_wild_hand():
     assert (sorted(best_wild_hand("6C 7C 8C 9C TC 5C ?B".split()))
@@ -157,7 +157,7 @@ def test_best_wild_hand():
             == ['7C', '7D', '7H', '7S', 'JD'])
     return 'test_best_wild_hand passes'
 
-print test_best_wild_hand()
+#print test_best_wild_hand()
 
 # CS 212, hw2-1: No leading zeroes
 
@@ -219,7 +219,7 @@ def faster_solve(formula):
         except ArithmeticError:
             pass
 
-def test():
+def faster_solve_test():
     assert faster_solve('A + B == BA') == None # should NOT return '1 + 0 == 01'
     assert faster_solve('YOU == ME**2') == ('289 == 17**2' or '576 == 24**2' or '841 == 29**2')
     assert faster_solve('X / X == X') == '1 / 1 == 1'
@@ -262,4 +262,50 @@ def floor_puzzle():
     floor_nos.append(result.index('Perlis'))
     floor_nos.append(result.index('Ritchie'))
     return floor_nos
-    #return [1, 2, 3, 4, 5] or [0, 1, 2, 3, 4]
+
+# --------------
+# User Instructions
+#
+# Write a function, longest_subpalindrome_slice(text) that takes
+# a string as input and returns the i and j indices that
+# correspond to the beginning and end indices of the longest
+# palindrome in the string.
+#
+# Grading Notes:
+#
+# You will only be marked correct if your function runs
+# efficiently enough. We will be measuring efficency by counting
+# the number of times you access each string. That count must be
+# below a certain threshold to be marked correct.
+#
+# Please do not use regular expressions to solve this quiz!
+
+def longest_subpalindrome_slice(text):
+    "Return (i, j) such that text[i:j] is the longest palindrome in text."
+    l = [i for i in text.lower()]
+    # Create a decreasing range list, ending at 2.
+    tests = range(len(l), 1, -1)
+    for t in tests:
+        s = 0
+        # Test each possible slice of l (length t).
+        while t <= len(l):
+            chunk = l[s:t]
+            if chunk == chunk[::-1]:
+                return (s, t)
+            s += 1
+            t += 1
+'''
+def test_subpalindrome():
+    L = longest_subpalindrome_slice
+    assert L('racecar') == (0, 7)
+    assert L('Racecar') == (0, 7)
+    assert L('RacecarX') == (0, 7)
+    assert L('Race carr') == (7, 9)
+    assert L('') == (0, 0)
+    assert L('something rac e car going') == (8,21)
+    assert L('xxxxx') == (0, 5)
+    assert L('Mad am I ma dam.') == (0, 15)
+    return 'tests pass'
+
+print test_subpalindrome()
+'''
