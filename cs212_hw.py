@@ -282,6 +282,7 @@ def floor_puzzle():
 
 def longest_subpalindrome_slice(text):
     "Return (i, j) such that text[i:j] is the longest palindrome in text."
+    if not text: return (0,0)
     l = [i for i in text.lower()]
     # Create a decreasing range list, ending at 2.
     tests = range(len(l), 1, -1)
@@ -294,7 +295,7 @@ def longest_subpalindrome_slice(text):
                 return (s, t)
             s += 1
             t += 1
-'''
+
 def test_subpalindrome():
     L = longest_subpalindrome_slice
     assert L('racecar') == (0, 7)
@@ -308,4 +309,3 @@ def test_subpalindrome():
     return 'tests pass'
 
 print test_subpalindrome()
-'''
