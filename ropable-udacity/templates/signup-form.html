@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{title}</title>
+        <link type=""text/css rel="stylesheet" href="/css/bootstrap.min.css">
+    </head>
+    <body>
+        <h1>Signup:</h1>
+        <form method="post">
+            <label for="username">Username*</label>
+            <input type ="text" name="username" value="{username}">
+            <span class="help-inline">{username_error}</span>
+            <br>
+            <label for="password">Password*</label>
+            <input type ="password" name="password" value="">
+            <span class="help-inline">{password_error}</span>
+            <br>
+            <label for="verify">Verify password*</label>
+            <input type ="password" name="verify" value=""><br>
+            <label for="email">Email</label>
+            <input type ="email" name="email" value="{email}">
+            <span class="help-inline">{email_error}</span><br>
+            </br>
+            <input type="submit">
+        </form>
+    </body>
+</html>

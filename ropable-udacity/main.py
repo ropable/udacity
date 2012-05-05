@@ -1,129 +1,71 @@
-#!/usr/bin/env python
+import os
 import webapp2
-import cgi
-import string
-import re
+import jinja2
+from google.appengine.ext import db
 
-def rot13_text(text=None):
-    if not text: return None
-    rot13 = string.maketrans("ABCDEFGHIJKLMabcdefghijklmNOPQRSTUVWXYZnopqrstuvwxyz",
-        "NOPQRSTUVWXYZnopqrstuvwxyzABCDEFGHIJKLMabcdefghijklm")
-    text = string.translate(text.encode('ascii'), rot13)
-    return cgi.escape(text)
+template_dir = os.path.join(os.path.dirname(__file__), 'templates')
+jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
+    autoescape=True)
 
-class MainHandler(webapp2.RequestHandler):
+class Handler(webapp2.RequestHandler):
+    def write(self, *a, **kw):
+        self.response.out.write(*a, **kw)
+
+    def render_str(self, template, **params):
+        t = jinja_env.get_template(template)
+        return t.render(params)
+
+    def render(self, template, **kw):
+        self.write(self.render_str(template, **kw))
+
+class MainPage(Handler):
     def get(self):
-        self.response.headers['Content-Type'] = 'text/html'
-        self.response.out.write("Hello, Udacity!")
+        self.render('front.html')
+        
+class Art(db.Model):
+    title = db.StringProperty(required=True)
+    art = db.TextProperty(required=True)
+    created = db.DateTimeProperty(auto_now_add=True)
 
-# UNIT 2 Homework
-base_page = '''
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>{title}</title>
-        <link type=""text/css rel="stylesheet" href="/css/bootstrap.min.css">
-    </head>
-    <body>
-        {body}
-    </body>
-</html>
-'''
-
-rot13_form = '''<h1>Enter some text to ROT13:</h1>
-<form method="post">
-    <textarea name="text">{0}</textarea>
-    </br>
-    <input type="submit">
-</form>'''
-
-class Rot13Handler(webapp2.RequestHandler):
-    def write_form(self, form_text=''):
-        form = rot13_form.format(form_text)
-        page = base_page.format(title='Unit 2 HW 1: ROT13', body=form)
-        self.response.out.write(page)
+class AsciiPage(Handler):
+    def render_front(self, title='', art='', error=''):
+        arts = db.GqlQuery('SELECT * FROM Art ORDER BY created DESC')
+        self.render('ascii.html', title=title, art=art, error=error, arts=arts)
 
     def get(self):
-        self.write_form()
-
-    def post(self):
-        text = self.request.get('text')
-        form_text = (rot13_text(text))
-        self.write_form(form_text)
-
-signup_form = '''<h1>Signup:</h1>
-<form method="post">
-    <label for="username">Username*</label>
-    <input type ="text" name="username" value="{username}">
-    <span class="help-inline">{username_error}</span>
-    <br>
-    <label for="password">Password*</label>
-    <input type ="password" name="password" value="">
-    <span class="help-inline">{password_error}</span>
-    <br>
-    <label for="verify">Verify password*</label>
-    <input type ="password" name="verify" value=""><br>
-    <label for="email">Email</label>
-    <input type ="email" name="email" value="{email}">
-    <span class="help-inline">{email_error}</span><br>
-    </br>
-    <input type="submit">
-</form>'''
-class UserSignupHandler(webapp2.RequestHandler):
-    def write_form(self, username='', username_error='', password_error='', email='', email_error=''):
-        form = signup_form.format(username=username, username_error=username_error,
-            password_error=password_error, email=email, email_error=email_error)
-        page = base_page.format(title='Unit 2 HW 2: User signup', body=form)
-        self.response.out.write(page)
-
-    def get(self):
-        self.write_form()
+        self.render_front()
         
     def post(self):
-        errors = False
-        username = self.request.get('username')
+        title = self.request.get('title')
+        art = self.request.get('art')
         
-        if username == '':
-            username_error = 'You must choose a username.'
-            errors = True
-        elif not re.match('^[a-zA-Z0-9_-]{3,20}$', username):
-            username_error = "That's not a valid username."
-            errors = True
+        if title and art:
+            a = Art(title=title, art=art)
+            a.put()
+            self.redirect('/')
         else:
-            username_error = ''
-        password = self.request.get('password')
-        verify = self.request.get('verify')
-        if password != verify:
-            password_error = 'The passwords did not match.'
-            errors = True
-        elif not re.match("^.{3,20}$", password):
-            password_error = 'That password is not valid.'
-            errors = True
-        elif not password:
-            password_error = 'You must choose a password.'
-            errors = True
-        else:
-            password_error = ''
-        email = self.request.get('email')
-        email_error = ''
-        if email:
-            if not re.match("^[\S]+@[\S]+\.[\S]+$", email):
-                email_error = 'That email is not valid.'
-                errors = True
-        if errors:
-            self.write_form(username=username, username_error=username_error,
-                password_error=password_error, email=email, email_error=email_error)
-        else:
-            # No validation errors
-            self.redirect('/unit2/welcome?username={0}'.format(username))
+            error = "Please input both a title and some art!"
+            self.render_front(title, art, error)
 
-class WelcomeHandler(webapp2.RequestHandler):
-    def get(self):
-        username = self.request.get('username')
-        self.response.out.write('<h1>Welcome, {0}!'.format(username))
-
-app = webapp2.WSGIApplication([('/', MainHandler),
-    ('/unit2/rot13', Rot13Handler),
-    ('/unit2/signup', UserSignupHandler),
-    ('/unit2/welcome', WelcomeHandler),
-    ], debug=True)
+class BlogEntry(db.Model):
+    subject = db.StringProperty(required=True)
+    content = db.TextProperty(required=True)
+    created = db.DateTimeProperty(auto_now_add=True)
+    
+class BlogPage(Handler):
+    def get(self, entry=None):
+        if not entry:
+            self.render('blog.html')
+        else:
+            self.response.write(entry)
+            
+class NewBlogPost(Handler):
+    pass
+    
+app = webapp2.WSGIApplication([
+    ('/', MainPage),
+    ('/unit3/ascii', AsciiPage),
+    ('/unit3/blog', BlogPage),
+    ('/unit3/blog/newpost', NewBlogPost),
+    ('/unit3/blog/([^/]+)', BlogPage),
+], debug=True)
