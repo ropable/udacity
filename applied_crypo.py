@@ -41,7 +41,7 @@ def display_bits(li):
 # Implement the cipher_block_chaining method below
 #
 
-#from Crypto.Cipher import AES
+from Crypto.Cipher import AES
 
 # Remember, this is NOT secure cryptology code
 # This is for fun and education.  Unless you're planning
@@ -66,7 +66,7 @@ def xor_encoder(block, key):
     block = pad_bits_append(block, len(key))
     cipher = [b ^ k for b, k in zip(block, key)]
     return cipher
-'''
+
 def aes_encoder(block, key):
     block = pad_bits_append(block, len(key))
     # the pycrypto library expects the key and block in 8 bit ascii 
@@ -75,7 +75,7 @@ def aes_encoder(block, key):
     key = bits_to_string(key)
     ecb = AES.new(key, AES.MODE_ECB)
     return string_to_bits(ecb.encrypt(block))
-'''
+
 ###### END of example encoders ########
 
 # this is an example implementation of 
@@ -96,7 +96,7 @@ def electronic_cookbook(plaintext, key, block_size, block_enc):
         cipher.extend(block_enc(block, key))
     return cipher
 
-def xor_bit_arrays(x, y):
+def xor_bits(x, y):
     '''
     XOR two bit arrays together
     '''
@@ -126,9 +126,9 @@ def cipher_block_chaining(plaintext, key, init_vec, block_size, block_enc):
         block = plaintext[start:end]
         if not prev_ciphertext:
             # First block only: XOR the block plaintext using the IV.
-            block = xor_bit_arrays(block, init_vec)
+            block = xor_bits(block, init_vec)
         else:
-            block = xor_bit_arrays(block, prev_ciphertext)
+            block = xor_bits(block, prev_ciphertext)
         prev_ciphertext = block_enc(block, key)
         cipher.extend(block_enc(block, key))
     return cipher
@@ -205,3 +205,18 @@ def pad_bits_append(small, size):
     # for the purpose of this exercise
     diff = max(0, size - len(small))
     return small + [0] * diff
+
+def hash_inputs():
+    block_size = 128
+    block_enc = aes_encoder
+    key = string_to_bits("Vs7mHNk8e39%CXeY")
+    ctr = [0] * block_size
+    return block_size, block_enc, key, ctr
+    
+def find_collision(message):
+    new_message = copy(message)
+    # This solution simply swaps around the first two blocks of new_message, which
+    # generates a hash collsion with message. Cribbed from the forums.
+    block_size, block_enc, key, ctr = hash_inputs()
+    return new_message[block_size:block_size*2] + new_message[:block_size] + new_message[block_size*2:]
+    #return new_message
