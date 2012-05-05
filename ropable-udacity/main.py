@@ -55,12 +55,26 @@ class BlogEntry(db.Model):
 class BlogPage(Handler):
     def get(self, entry=None):
         if not entry:
-            self.render('blog.html')
+            e = db.GqlQuery('SELECT * from BlogEntry ORDER BY created DESC LIMIT 10')
+            self.render('blog.html', latest_entries=e)
         else:
-            self.response.write(entry)
+            e = BlogEntry.get_by_id(ids=int(entry))
+            self.render('blog.html', single_entry=e)
             
 class NewBlogPost(Handler):
-    pass
+    def get(self):
+        self.render('new_entry_form.html')
+        
+    def post(self):
+        subject = self.request.get('subject')
+        content = self.request.get('content')
+        if subject and content:
+            entry = BlogEntry(subject=subject, content=content)
+            entry.put()
+            self.redirect('/unit3/blog/{0}'.format(entry.key().id()))
+        else:
+            error = "New blog post requires both a subject and a title."
+            self.render('new_entry_form.html', subject=subject, content=content, error=error)
     
 app = webapp2.WSGIApplication([
     ('/', MainPage),
