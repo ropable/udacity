@@ -1,13 +1,14 @@
 #!/usr/bin/env python
-from __future__ import division
-import string, re 
-import itertools
-import time
 '''
 CS212 Design of Computer Programs
 Unit 2 scripts
 -----------------------------------------------------------------
 '''
+from __future__ import division
+import string, re 
+import itertools
+import time
+
 def imright(h1, h2):
     "House h1 is immediately right of h2 if h1-h2 == 1."
     return h1-h2 == 1

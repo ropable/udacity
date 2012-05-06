@@ -1,14 +1,14 @@
 #!/usr/bin/env python
-import random
-import itertools
-import re
-import string
-
 '''
 CS212 Design of Computer Programs
 UNIT 1 scripts
 -----------------------------------------------------------------
 '''
+import random
+import itertools
+import re
+import string
+
 # Generate a standard deck of cards.
 std_deck = [r+s for r in '23456789TJQKA' for s in 'SHDC']
 
