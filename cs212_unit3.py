@@ -289,16 +289,12 @@ def slow_inverse(f, delta=1/128.):
     non-negatve numbers, return the function x = f_1(y) that is an approximate
     inverse, picking the closest value to the inverse, within delta.'''
     def f_1(y):
-        print(y)
-        print(f)
         x = 0
-        count = 0
+        #count = 0
         while f(x) < y:
-            #print(x)
-            #print(count)
             x += delta
-            count += 1
-        # Now x is too big, x-delta is too small; pick the closest to y
+            #count += 1
+        #print(count)
         return x if (f(x)-y < y-f(x-delta)) else x-delta
     return f_1 
 
@@ -308,16 +304,21 @@ def inverse(f, delta = 1/128.):
     non-negatve numbers, return the function x = f_1(y) that is an approximate
     inverse, picking the closest value to the inverse, within delta.'''
     def f_1(y):
-        #print(y)
-        #print(f)
-        x = 0
+        x, x_min = 0, 0
+        #count = 0
         delta2 = copy(delta)
-        count = 0
-        while f(x) < y:
-            x += delta2
-            delta2 *= 2
-            count += 1
-        print(count)
+        while True:
+            # Reset x to the value of x_min; this result will be successively closer 
+            # to correct with each completed "child" while loop (below).
+            x = x_min
+            while f(x) < y:
+                x_min = x
+                x += delta2
+                #count += 1
+                delta2 *= 2
+            if abs(x-x_min) <= delta: break # Breaks out of the parent "True" loop.
+            delta2 = copy(delta) # Take a new copy of delta.
+        #print(count)
         return x if (f(x)-y < y-f(x-delta)) else x-delta
     return f_1
     
