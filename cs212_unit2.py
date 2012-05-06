@@ -1,163 +1,165 @@
-# CS 212, hw1-1: 7-card stud
-
-# -----------------
-# User Instructions
-#
-# Write a function best_hand(hand) that takes a seven
-# card hand as input and returns the best possible 5
-# card hand. The itertools library has some functions
-# that may help you solve this problem.
-#
-# -----------------
-# Grading Notes
-#
-# Muliple correct answers will be accepted in cases
-# where the best hand is ambiguous (for example, if
-# you have 4 kings and 3 queens, there are three best
-# hands: 4 kings along with any of the three queens).
-
+#!/usr/bin/env python
+from __future__ import division
+import string, re 
 import itertools
+import time
+'''
+CS212 Design of Computer Programs
+Unit 2 scripts
+-----------------------------------------------------------------
+'''
+def imright(h1, h2):
+    "House h1 is immediately right of h2 if h1-h2 == 1."
+    return h1-h2 == 1
 
-def best_hand(hand):
-    "From a 7-card hand, return the best 5 card hand."
-    all_hands = itertools.combinations(hand, 5)
-    return max(all_hands, key=hand_rank)
+def nextto(h1, h2):
+    "Two houses are next to each other if they differ by 1."
+    return abs(h1-h2) == 1
 
-# CS 212, hw1-2: Jokers Wild
-#
-# -----------------
-# User Instructions
-#
-# Write a function best_wild_hand(hand) that takes as
-# input a 7-card hand and returns the best 5 card hand.
-# In this problem, it is possible for a hand to include
-# jokers. Jokers will be treated as 'wild cards' which
-# can take any rank or suit of the same color. The
-# black joker, '?B', can be used as any spade or club
-# and the red joker, '?R', can be used as any heart
-# or diamond.
-#
-# The itertools library may be helpful. Feel free to
-# define multiple functions if it helps you solve the
-# problem.
-#
-# -----------------
-# Grading Notes
-#
-# Muliple correct answers will be accepted in cases
-# where the best hand is ambiguous (for example, if
-# you have 4 kings and 3 queens, there are three best
-# hands: 4 kings along with any of the three queens).
-def best_wild_hand(hand):
-    "Try all values for jokers in all 5-card selections."
-    # First get all combos of 5 cards.
-    all_hands = [list(x) for x in itertools.combinations(hand, 5)]
-    # Now, for all hands with a red joker in them,
-    # replace the joker with every possible replacement.
-    all_hands_red = []
-    for hand in all_hands:
-        if '?R' not in hand:
-            all_hands_red.append(hand)
-        else:
-            hand.remove('?R')
-            for i in [r+s for r in '23456789TJQKA' for s in 'HD']:
-                all_hands_red.append(hand + [i])
-    # Replace all hands with a black joker with
-    all_hands_black = []
-    for hand in all_hands_red:
-        if '?B' not in hand:
-            all_hands_black.append(hand)
-        else:
-            hand.remove('?B')
-            for i in [r+s for r in '23456789TJQKA' for s in 'SC']:
-                all_hands_black.append(hand + [i])
-    # Finally, return the max ranked hand.
-    return max(all_hands_black, key=hand_rank)
+def zebra_puzzle():
+    "Return a tuple (WATER, ZEBRA indicating their house numbers."
+    houses = first, _, middle, _, _ = [1, 2, 3, 4, 5]
+    orderings = list(itertools.permutations(houses)) # 1
+    return next((WATER, ZEBRA)
+                for (red, green, ivory, yellow, blue) in c(orderings)
+                if imright(green, ivory)
+                for (Englishman, Spaniard, Ukranian, Japanese, Norwegian) in c(orderings)
+                if Englishman is red
+                if Norwegian is first
+                if nextto(Norwegian, blue)
+                for (coffee, tea, milk, oj, WATER) in c(orderings)
+                if coffee is green
+                if Ukranian is tea
+                if milk is middle
+                for (OldGold, Kools, Chesterfields, LuckyStrike, Parliaments) in c(orderings)
+                if Kools is yellow
+                if LuckyStrike is oj
+                if Japanese is Parliaments
+                for (dog, snails, fox, horse, ZEBRA) in c(orderings)
+                if Spaniard is dog
+                if OldGold is snails
+                if nextto(Chesterfields, fox)
+                if nextto(Kools, horse)
+                )
 
-# ------------------
-# Provided Functions
-#
-# You may want to use some of the functions which
-# you have already defined in the unit to write
-# your best_hand function.
+def c(sequence):
+    c.starts += 1
+    for item in sequence:
+        c.items += 1
+        yield item
 
-def hand_rank(hand):
-    "Return a value indicating the ranking of a hand."
-    ranks = card_ranks(hand)
-    if straight(ranks) and flush(hand):
-        return (8, max(ranks))
-    elif kind(4, ranks):
-        return (7, kind(4, ranks), kind(1, ranks))
-    elif kind(3, ranks) and kind(2, ranks):
-        return (6, kind(3, ranks), kind(2, ranks))
-    elif flush(hand):
-        return (5, ranks)
-    elif straight(ranks):
-        return (4, max(ranks))
-    elif kind(3, ranks):
-        return (3, kind(3, ranks), ranks)
-    elif two_pair(ranks):
-        return (2, two_pair(ranks), ranks)
-    elif kind(2, ranks):
-        return (1, kind(2, ranks), ranks)
+def instrument_fn(fn, *args):
+    c.starts, c.items = 0, 0
+    result = fn(*args)
+    print('%s got %s with %5d iters over %7d items'%(
+        fn.__name__, result, c.starts, c.items))
+
+
+def solve(formula):
+    """Given a formula like 'ODD + ODD == EVEN', fill in digits to solve it.
+    Input formula is a string; output is a digit-filled-in string or None."""
+    for answer in (f for f in fill_in(formula) if valid(f)):
+        return answer
+
+def fill_in(formula):
+    "Generate all possible fillings-in of letters in formula with digits."
+    letters = ''.join(set(l for l in formula if l in string.uppercase))
+    for digits in itertools.permutations('1234567890', len(letters)):
+        table = string.maketrans(letters, ''.join(digits))
+        yield formula.translate(table)
+
+def valid(f):
+    """Formula f is valid if and only if it has no
+    numbers with leading zero, and evals true."""
+    try:
+        return not re.search(r'\b0[0-9]', f) and eval(f) is True
+    except ArithmeticError:
+        return False
+
+def faster_solve(formula):
+    """Given a formula like 'ODD + ODD == EVEN', fill in digits to solve it.
+    Input formula is a string; output is a digit-filled-in string or None.
+    This version precompiles the formula; only one eval per formula."""
+    f, letters = compile_formula(formula)
+    for digits in itertools.permutations((1,2,3,4,5,6,7,8,9,0), len(letters)):
+        try:
+            if f(*digits) is True:
+                table = string.maketrans(letters, ''.join(map(str, digits)))
+                return formula.translate(table)
+        except ArithmeticError:
+            pass
+
+def compile_formula(formula, verbose=False):
+    """Compile formula into a function.   Also return letters found, as a str,
+    in same order as parms of function. For example, 'YOU == ME**2' returns
+    (lambda Y, M, E, U, O): (U+10*O+100*Y) == (E+10*M)**2), 'YMEUO' """
+    letters = ''.join(set(re.findall('[A-Z]', formula)))
+    parms = ', '.join(letters)
+    tokens = map(compile_word, re.split('([A-Z]+)', formula))
+    body = ''.join(tokens)
+    f = 'lambda %s: %s' % (parms, body)
+    if verbose: print f
+    return eval(f), letters
+
+def compile_word(word):
+    """Compile a word of uppercase letters as numeric digits.
+    E.g., compile_word('YOU') => '(1*U+10*O+100*Y)'
+    Non-uppercase words unchanged: compile_word('+') => '+'"""
+    if word.isupper():
+        terms = [('%s*%s' % (10**i, d))
+                for (i, d) in enumerate(word[::-1])]
+        return '(' + '+'.join(terms) + ')'
     else:
-        return (0, ranks)
+        return word
 
-def card_ranks(hand):
-    "Return a list of the ranks, sorted with higher first."
-    ranks = ['--23456789TJQKA'.index(r) for r, s in hand]
-    ranks.sort(reverse = True)
-    return [5, 4, 3, 2, 1] if (ranks == [14, 5, 4, 3, 2]) else ranks
+examples = '''TWO + TWO == FOUR
+A**2 + B**2 == C**2
+A**2 + BE**2 == BY**2
+X / X == X
+A**N + B**N == C**N and N > 1
+ATOM**0.5 == A + TO + M
+GLITTERS is not GOLD
+ONE < TWO and FOUR < FIVE
+ONE < TWO < THREE
+RAMN == R**3 + RM**3 == N**3 + RX**3
+sum(range(AA)) == BB
+sum(range(POP)) == BOBO
+ODD + ODD == EVEN
+PLUTO not in set([PLANETS])'''.splitlines()
 
-def flush(hand):
-    "Return True if all the cards have the same suit."
-    suits = [s for r,s in hand]
-    return len(set(suits)) == 1
+def test():
+    t0 = time.clock()
+    for example in examples:
+        print; print 13*' ', example
+        print '%6.4f sec:   %s ' % timedcall(faster_solve, example)
+    print '%6.4f tot.' % (time.clock()-t0)
 
-def straight(ranks):
-    """Return True if the ordered
-    ranks form a 5-card straight."""
-    return (max(ranks)-min(ranks) == 4) and len(set(ranks)) == 5
+def timedcall(fn, *args):
+    "Call function with args; return the time in seconds and result."
+    t0 = time.clock()
+    result = fn(*args)
+    t1 = time.clock()
+    return t1-t0, result
 
-def kind(n, ranks):
-    """Return the first rank that this hand has
-    exactly n-of-a-kind of. Return None if there
-    is no n-of-a-kind in the hand."""
-    for r in ranks:
-        if ranks.count(r) == n: return r
-    return None
+def average(numbers):
+    "Return the average (arithmetic mean) of a sequence of numbers."
+    return sum(numbers) / float(len(numbers))
 
-def two_pair(ranks):
-    """If there are two pair here, return the two
-    ranks of the two pairs, else None."""
-    pair = kind(2, ranks)
-    lowpair = kind(2, list(reversed(ranks)))
-    if pair and lowpair != pair:
-        return (pair, lowpair)
+def timedcalls(n, fn, *args):
+    """Call fn(*args) repeatedly: n times if n is an int, or up to
+    n seconds if n is a float; return the min, avg, and max time"""
+    if isinstance(n, int):
+        times = [timedcall(fn, *args)[0] for _ in range(n)]
     else:
-        return None
+        times = []
+        total = 0.0
+        while total < n:
+            t = timedcall(fn, *args)[0]
+            total += t
+            times.append(t)
+    return min(times), average(times), max(times)
 
-def test_best_hand():
-    assert (sorted(best_hand("6C 7C 8C 9C TC 5C JS".split()))
-            == ['6C', '7C', '8C', '9C', 'TC'])
-    assert (sorted(best_hand("TD TC TH 7C 7D 8C 8S".split()))
-            == ['8C', '8S', 'TC', 'TD', 'TH'])
-    assert (sorted(best_hand("JD TC TH 7C 7D 7S 7H".split()))
-            == ['7C', '7D', '7H', '7S', 'JD'])
-    return 'test_best_hand passes'
-
-#print test_best_hand()
-
-def test_best_wild_hand():
-    assert (sorted(best_wild_hand("6C 7C 8C 9C TC 5C ?B".split()))
-            == ['7C', '8C', '9C', 'JC', 'TC'])
-    assert (sorted(best_wild_hand("TD TC 5H 5C 7C ?R ?B".split()))
-            == ['7C', 'TC', 'TD', 'TH', 'TS'])
-    assert (sorted(best_wild_hand("JD TC TH 7C 7D 7S 7H".split()))
-            == ['7C', '7D', '7H', '7S', 'JD'])
-    return 'test_best_wild_hand passes'
-
-#print test_best_wild_hand()
+test()
 
 # CS 212, hw2-1: No leading zeroes
 
@@ -168,9 +170,6 @@ def test_best_wild_hand():
 # it returns (f) does not allow numbers where the first digit
 # is zero. So if the formula contained YOU, f would return
 # False anytime that Y was 0
-
-import re
-import string
 
 def compile_formula(formula, verbose=False):
     """Compile formula into a function. Also return letters found, as a str,

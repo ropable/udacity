@@ -1,13 +1,14 @@
 #!/usr/bin/env python
-'''
-CS212 Design of Computer Programs
-'''
+import random
+import itertools
+import re
+import string
 
 '''
+CS212 Design of Computer Programs
 UNIT 1 scripts
 -----------------------------------------------------------------
 '''
-import random
 # Generate a standard deck of cards.
 std_deck = [r+s for r in '23456789TJQKA' for s in 'SHDC']
 
@@ -145,7 +146,104 @@ def test2():
     return 'tests pass'
 
 print test()
-'''
-UNIT 2 scripts
------------------------------------------------------------------
-'''
+
+# CS 212, hw1-1: 7-card stud
+# -----------------
+# User Instructions
+#
+# Write a function best_hand(hand) that takes a seven
+# card hand as input and returns the best possible 5
+# card hand. The itertools library has some functions
+# that may help you solve this problem.
+#
+# -----------------
+# Grading Notes
+#
+# Muliple correct answers will be accepted in cases
+# where the best hand is ambiguous (for example, if
+# you have 4 kings and 3 queens, there are three best
+# hands: 4 kings along with any of the three queens).
+
+
+def best_hand(hand):
+    "From a 7-card hand, return the best 5 card hand."
+    all_hands = itertools.combinations(hand, 5)
+    return max(all_hands, key=hand_rank)
+
+# CS 212, hw1-2: Jokers Wild
+#
+# -----------------
+# User Instructions
+#
+# Write a function best_wild_hand(hand) that takes as
+# input a 7-card hand and returns the best 5 card hand.
+# In this problem, it is possible for a hand to include
+# jokers. Jokers will be treated as 'wild cards' which
+# can take any rank or suit of the same color. The
+# black joker, '?B', can be used as any spade or club
+# and the red joker, '?R', can be used as any heart
+# or diamond.
+#
+# The itertools library may be helpful. Feel free to
+# define multiple functions if it helps you solve the
+# problem.
+#
+# -----------------
+# Grading Notes
+#
+# Muliple correct answers will be accepted in cases
+# where the best hand is ambiguous (for example, if
+# you have 4 kings and 3 queens, there are three best
+# hands: 4 kings along with any of the three queens).
+def best_wild_hand(hand):
+    "Try all values for jokers in all 5-card selections."
+    # First get all combos of 5 cards.
+    all_hands = [list(x) for x in itertools.combinations(hand, 5)]
+    # Now, for all hands with a red joker in them,
+    # replace the joker with every possible replacement.
+    all_hands_red = []
+    for hand in all_hands:
+        if '?R' not in hand:
+            all_hands_red.append(hand)
+        else:
+            hand.remove('?R')
+            for i in [r+s for r in '23456789TJQKA' for s in 'HD']:
+                all_hands_red.append(hand + [i])
+    # Replace all hands with a black joker with
+    all_hands_black = []
+    for hand in all_hands_red:
+        if '?B' not in hand:
+            all_hands_black.append(hand)
+        else:
+            hand.remove('?B')
+            for i in [r+s for r in '23456789TJQKA' for s in 'SC']:
+                all_hands_black.append(hand + [i])
+    # Finally, return the max ranked hand.
+    return max(all_hands_black, key=hand_rank)
+
+# ------------------
+# Provided Functions
+#
+# You may want to use some of the functions which
+# you have already defined in the unit to write
+# your best_hand function.
+
+def test_best_hand():
+    assert (sorted(best_hand("6C 7C 8C 9C TC 5C JS".split()))
+            == ['6C', '7C', '8C', '9C', 'TC'])
+    assert (sorted(best_hand("TD TC TH 7C 7D 8C 8S".split()))
+            == ['8C', '8S', 'TC', 'TD', 'TH'])
+    assert (sorted(best_hand("JD TC TH 7C 7D 7S 7H".split()))
+            == ['7C', '7D', '7H', '7S', 'JD'])
+    return 'test_best_hand passes'
+
+print test_best_hand()
+
+def test_best_wild_hand():
+    assert (sorted(best_wild_hand("6C 7C 8C 9C TC 5C ?B".split()))
+            == ['7C', '8C', '9C', 'JC', 'TC'])
+    assert (sorted(best_wild_hand("TD TC 5H 5C 7C ?R ?B".split()))
+            == ['7C', 'TC', 'TD', 'TH', 'TS'])
+    assert (sorted(best_wild_hand("JD TC TH 7C 7D 7S 7H".split()))
+            == ['7C', '7D', '7H', '7S', 'JD'])
+    return 'test_best_wild_hand passes'
