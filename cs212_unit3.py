@@ -1,6 +1,23 @@
 import functools
 import re
 
+# Homework 3-1
+# ---------------
+# User Instructions
+#
+# In this problem, you will be using many of the tools and techniques
+# that you developed in unit 3 to write a grammar that will allow
+# us to write a parser for the JSON language. 
+#
+# You will have to visit json.org to see the JSON grammar. It is not 
+# presented in the correct format for our grammar function, so you 
+# will need to translate it.
+
+# ---------------
+# Provided functions
+#
+# These are all functions that were built in unit 3. They will help
+# you as you write the grammar.
 def grammar(description, whitespace = r'\s*'):
     '''
     Convert a description to a grammar. Each line is a rule for a
@@ -175,7 +192,7 @@ def verify(G):
     show('Orphans ', lhstokens-rhstokens)
 
 JSON = grammar(r'''
-    object => \{ members \} | [\{][\}]
+    object => \{ members \} | \{\}
     members => pair , members | pair
     pair => string [\:] value
     array => \[ elements \] | \[\]
@@ -240,3 +257,70 @@ if __name__ == '__main__':
     # print(URL)
     # verify(URL)
     # print(parse('url', 'http://www.w3.org/Addressing/URL/5_BNF.html', URL))
+
+# Homework 3-2
+# --------------
+# User Instructions
+#
+# Write a function, inverse, which takes as input a monotonically
+# increasing (always increasing) function that is defined on the 
+# non-negative numbers. The runtime of your program should be 
+# proportional to the LOGARITHM of the input. You may want to 
+# do some research into binary search and Newton's method to 
+# help you out.
+#
+# This function should return another function which computes the
+# inverse of the input function. 
+#
+# Your inverse function should also take an optional parameter, 
+# delta, as input so that the computed value of the inverse will
+# be within delta of the true value.
+
+# -------------
+# Grading Notes
+#
+# Your function will be called with three test cases. The 
+# input numbers will be large enough that your submission
+# will only terminate in the allotted time if it is 
+# efficient enough. 
+
+def slow_inverse(f, delta=1/128.):
+    '''Given a function y = f(x) that is a monotonically increasing function on
+    non-negatve numbers, return the function x = f_1(y) that is an approximate
+    inverse, picking the closest value to the inverse, within delta.'''
+    def f_1(y):
+        print(y)
+        print(f)
+        x = 0
+        count = 0
+        while f(x) < y:
+            #print(x)
+            #print(count)
+            x += delta
+            count += 1
+        # Now x is too big, x-delta is too small; pick the closest to y
+        return x if (f(x)-y < y-f(x-delta)) else x-delta
+    return f_1 
+
+from copy import copy
+def inverse(f, delta = 1/128.):
+    '''Given a function y = f(x) that is a monotonically increasing function on
+    non-negatve numbers, return the function x = f_1(y) that is an approximate
+    inverse, picking the closest value to the inverse, within delta.'''
+    def f_1(y):
+        #print(y)
+        #print(f)
+        x = 0
+        delta2 = copy(delta)
+        count = 0
+        while f(x) < y:
+            x += delta2
+            delta2 *= 2
+            count += 1
+        print(count)
+        return x if (f(x)-y < y-f(x-delta)) else x-delta
+    return f_1
+    
+def square(x): return x*x
+sqrt = slow_inverse(square)
+sqrt2 = inverse(square)
