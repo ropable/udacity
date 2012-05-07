@@ -7,10 +7,10 @@ import re
 #
 # In this problem, you will be using many of the tools and techniques
 # that you developed in unit 3 to write a grammar that will allow
-# us to write a parser for the JSON language. 
+# us to write a parser for the JSON language.
 #
-# You will have to visit json.org to see the JSON grammar. It is not 
-# presented in the correct format for our grammar function, so you 
+# You will have to visit json.org to see the JSON grammar. It is not
+# presented in the correct format for our grammar function, so you
 # will need to translate it.
 
 # ---------------
@@ -29,7 +29,7 @@ def grammar(description, whitespace = r'\s*'):
     the '|' sign. Each alternative is a sequence of atoms, separated by
     spaces.  An atom is either a symbol on syme left-hand side, or it is a
     regular expression that will be passed to re.match to match a token.
-    
+
     Notation for *, +, or ? not allowed in a rule alternative (but ok within a
     token). Use '\' to continue long lines. You must include spaces or tabs
     around '=>' and '|'. That's within the grammar description itself(...?). The
@@ -65,7 +65,7 @@ def parse(start_symbol, text, grammar):
     def parse_sequence(sequence, text):
         '''
         Try to match the sequence of atoms against text.
-        
+
         Parameters:
         sequence : an iterable of atoms
         text : a string
@@ -97,12 +97,12 @@ def parse(start_symbol, text, grammar):
         if atom in grammar:  # Non-Terminal: tuple of alternatives
             for alternative in grammar[atom]:
                 tree, rem = parse_sequence(alternative, text)
-                if rem is not None: return [atom]+tree, rem  
+                if rem is not None: return [atom]+tree, rem
             return Fail
         else:  # Terminal: match characters against start of text
             m = re.match(tokenizer % atom, text)
             return Fail if (not m) else (m.group(1), text[m.end():])
-    
+
     return parse_atom(start_symbol, text)
 
 Fail = (None, None)
@@ -192,22 +192,22 @@ def verify(G):
     show('Orphans ', lhstokens-rhstokens)
 
 JSON = grammar(r'''
-    object => \{ members \} | \{\}
+    object => [{] members [}] | [{][}]
     members => pair , members | pair
-    pair => string [\:] value
-    array => \[ elements \] | \[\]
-    elements => value [,] elements | value
+    pair => string [:] value
+    array => [[] elements []] | [[][]]
+    elements => value , elements | value
     value => string | number | object | array
-    string => \"[^"\\\\]*\" | \"\"
+    string => "[^"]*" | ""
     number => int frac exp | int exp | int frac | int
     int => [-]?[\d][\d]*
-    frac => \.[\d]*
+    frac => [/.][\d]*
     exp => [eE][+-]?[\d]+
 ''', whitespace='\s*')
 
 #chars => char chars | char
 #char => ^\\"\/\b\f\r\t\n
-    
+
 #string => " ([^"\\\\]*|\\\\["\\\\bfnrt\/]|\\\\u[0-9a-f]{4})* "
 #number => -?(?=[1-9]|0(?!\d))\d+(\.\d+)?([eE][+-]?\d+)
 
@@ -217,41 +217,41 @@ def json_parse(text):
 #["testing", 1, 2, 3]
 #-123.456e+789
 #{"age": 21, "state":"CO","occupation":"rides the rodeo"}
-def test():
+def test_json_parser():
     # my new tests
     assert json_parse('-123') == (['value', ['number', ['int', '-123']]], '')
     assert json_parse('0.023') == (['value', ['number', ['int', '0'], ['frac', '.023']]], '')
     assert json_parse('1e023') == (['value', ['number', ['int', '1'], ['exp', 'e023']]], '')
     assert json_parse('1.03e023') == (['value', ['number', ['int', '1'], ['frac', '.03'], ['exp', 'e023']]], '')
     assert json_parse('"ab"') == (['value', ['string', '"ab"']], '')
-    assert json_parse('{}') == (['value', ['object', '{', '}']], '')
+    assert json_parse('{}') == (['value', ['object', '{}']], '')
     assert json_parse('{"name": 2}') == (['value', ['object', '{', ['members', ['pair', ['string', '"name"'], ':', ['value', ['number', ['int', '2']]]]], '}']], '')
     assert json_parse('{"age": "cool"}') == (['value', ['object', '{', ['members', ['pair', ['string', '"age"'], ':', ['value', ['string', '"cool"']]]], '}']], '')
-    assert json_parse('[]') == (['value', ['array', '[', ']']], '')
+    assert json_parse('[]') == (['value', ['array', '[]']], '')
     assert json_parse('[1]') == (['value', ['array', '[', ['elements', ['value', ['number', ['int', '1']]]], ']']], '')
     assert json_parse('[1, "new"]') == (['value', ['array', '[', ['elements', ['value', ['number', ['int', '1']]], ',', ['elements', ['value', ['string', '"new"']]]], ']']], '')
     # Original tests
-    assert json_parse('["testing", 1, 2, 3]') == (                      
-                       ['value', ['array', '[', ['elements', ['value', 
-                       ['string', '"testing"']], ',', ['elements', ['value', ['number', 
-                       ['int', '1']]], ',', ['elements', ['value', ['number', 
-                       ['int', '2']]], ',', ['elements', ['value', ['number', 
+    assert json_parse('["testing", 1, 2, 3]') == (
+                       ['value', ['array', '[', ['elements', ['value',
+                       ['string', '"testing"']], ',', ['elements', ['value', ['number',
+                       ['int', '1']]], ',', ['elements', ['value', ['number',
+                       ['int', '2']]], ',', ['elements', ['value', ['number',
                        ['int', '3']]]]]]], ']']], '')
     assert json_parse('-123.456e+789') == (
                        ['value', ['number', ['int', '-123'], ['frac', '.456'], ['exp', 'e+789']]], '')
     assert json_parse('{"age": 21, "state":"CO","occupation":"rides the rodeo"}') == (
-                      ['value', ['object', '{', ['members', ['pair', ['string', '"age"'], 
-                       ':', ['value', ['number', ['int', '21']]]], ',', ['members', 
-                      ['pair', ['string', '"state"'], ':', ['value', ['string', '"CO"']]], 
-                      ',', ['members', ['pair', ['string', '"occupation"'], ':', 
+                      ['value', ['object', '{', ['members', ['pair', ['string', '"age"'],
+                       ':', ['value', ['number', ['int', '21']]]], ',', ['members',
+                      ['pair', ['string', '"state"'], ':', ['value', ['string', '"CO"']]],
+                      ',', ['members', ['pair', ['string', '"occupation"'], ':',
                       ['value', ['string', '"rides the rodeo"']]]]]], '}']], '')
-    return 'tests pass'
+    return 'JSON parser tests pass'
 
-#print test()
+print test_json_parser()
 
 if __name__ == '__main__':
     # print(G)
-    verify(G)    
+    verify(G)
     print(parse('Exp', '3*x + b', G))
 
     # print(URL)
@@ -263,26 +263,26 @@ if __name__ == '__main__':
 # User Instructions
 #
 # Write a function, inverse, which takes as input a monotonically
-# increasing (always increasing) function that is defined on the 
-# non-negative numbers. The runtime of your program should be 
-# proportional to the LOGARITHM of the input. You may want to 
-# do some research into binary search and Newton's method to 
+# increasing (always increasing) function that is defined on the
+# non-negative numbers. The runtime of your program should be
+# proportional to the LOGARITHM of the input. You may want to
+# do some research into binary search and Newton's method to
 # help you out.
 #
 # This function should return another function which computes the
-# inverse of the input function. 
+# inverse of the input function.
 #
-# Your inverse function should also take an optional parameter, 
+# Your inverse function should also take an optional parameter,
 # delta, as input so that the computed value of the inverse will
 # be within delta of the true value.
 
 # -------------
 # Grading Notes
 #
-# Your function will be called with three test cases. The 
+# Your function will be called with three test cases. The
 # input numbers will be large enough that your submission
-# will only terminate in the allotted time if it is 
-# efficient enough. 
+# will only terminate in the allotted time if it is
+# efficient enough.
 
 def slow_inverse(f, delta=1/128.):
     '''Given a function y = f(x) that is a monotonically increasing function on
@@ -296,7 +296,7 @@ def slow_inverse(f, delta=1/128.):
             #count += 1
         #print(count)
         return x if (f(x)-y < y-f(x-delta)) else x-delta
-    return f_1 
+    return f_1
 
 from copy import copy
 def inverse(f, delta = 1/128.):
@@ -308,7 +308,7 @@ def inverse(f, delta = 1/128.):
         #count = 0
         delta2 = copy(delta)
         while True:
-            # Reset x to the value of x_min; this result will be successively closer 
+            # Reset x to the value of x_min; this result will be successively closer
             # to correct with each completed "child" while loop (below).
             x = x_min
             while f(x) < y:
@@ -321,7 +321,7 @@ def inverse(f, delta = 1/128.):
         #print(count)
         return x if (f(x)-y < y-f(x-delta)) else x-delta
     return f_1
-    
+
 def square(x): return x*x
 sqrt = slow_inverse(square)
 sqrt2 = inverse(square)
@@ -331,45 +331,46 @@ sqrt2 = inverse(square)
 # User Instructions
 #
 # Write a function, findtags(text), that takes a string of text
-# as input and returns a list of all the html start tags in the 
+# as input and returns a list of all the html start tags in the
 # text. It may be helpful to use regular expressions to solve
 # this problem.
 
 import re
 
 def findtags(text):
-    # your code here
-    pass
-    #<([^/]+)>|<[^\d]> Works on text 1
-    #<[^/][ ]* WIP
+    #<[^/] *b *> captures <     b    >
+    #<[\w]> captures <b>
+    #<[^/l][^/\d>]*> captures <a href=....>, <b>, <   b   > but not <let's see>
+    pattern = '<[^/l][^/\d>]*>'
+    return re.findall(pattern, text)
 
 testtext1 = '''
-My favorite website in the world is probably 
-<a href="www.udacity.com">Udacity</a>. If you want 
+My favorite website in the world is probably
+<a href="www.udacity.com">Udacity</a>. If you want
 that link to open in a <b>new tab</b> by default, you should
 write <a href="www.udacity.com"target="_blank">Udacity</a>
 instead!
 '''
 
 testtext2 = '''
-Okay, so you passed the first test case. <let's see> how you 
-handle this one. Did you know that 2 < 3 should return True? 
+Okay, so you passed the first test case. <let's see> how you
+handle this one. Did you know that 2 < 3 should return True?
 So should 3 > 2. But 2 > 3 is always False.
 '''
 
 testtext3 = '''
-It's not common, but we can put a LOT of whitespace into 
+It's not common, but we can put a LOT of whitespace into
 our HTML tags. For example, we can make something bold by
-doing <         b           > this <   /b    >, Though I 
+doing <         b           > this <   /b    >, Though I
 don't know why you would ever want to.
 '''
 
-def test():
-    assert findtags(testtext1) == ['<a href="www.udacity.com">', 
-                                   '<b>', 
+def test_html_regex():
+    assert findtags(testtext1) == ['<a href="www.udacity.com">',
+                                   '<b>',
                                    '<a href="www.udacity.com"target="_blank">']
     assert findtags(testtext2) == []
     assert findtags(testtext3) == ['<         b           >']
-    return 'tests pass'
+    return 'HTML regex tests pass'
 
-print test()
+#print test_html_regex()
