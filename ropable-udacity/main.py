@@ -76,10 +76,65 @@ class NewBlogPost(Handler):
             error = "New blog post requires both a subject and a title."
             self.render('new_entry_form.html', subject=subject, content=content, error=error)
     
+class UserSignup(Handler):
+    #def write_form(self, username='', username_error='', password_error='', email='', email_error=''):
+    #    form = signup_form.format(username=username, username_error=username_error,
+    #        password_error=password_error, email=email, email_error=email_error)
+    #    page = base_page.format(title='Unit 2 HW 2: User signup', body=form)
+    #    self.response.out.write(page)
+    #def render_front(self, title='', art='', error=''):
+    #    arts = db.GqlQuery('SELECT * FROM Art ORDER BY created DESC')
+    #    self.render('ascii.html', title=title, art=art, error=error, arts=arts)
+    def render_form(self, username='', username_error='', password_error='', email='', email_error=''):
+        self.render('signup-form.html',  username_error=username_error, 
+            password_error=password_error, email=email, email_error=email_error)
+
+    def get(self):
+        self.render_form()
+        
+    def post(self):
+        errors = False
+        username = self.request.get('username')
+        
+        if username == '':
+            username_error = 'You must choose a username.'
+            errors = True
+        elif not re.match('^[a-zA-Z0-9_-]{3,20}$', username):
+            username_error = "That's not a valid username."
+            errors = True
+        else:
+            username_error = ''
+        password = self.request.get('password')
+        verify = self.request.get('verify')
+        if password != verify:
+            password_error = 'The passwords did not match.'
+            errors = True
+        elif not re.match("^.{3,20}$", password):
+            password_error = 'That password is not valid.'
+            errors = True
+        elif not password:
+            password_error = 'You must choose a password.'
+            errors = True
+        else:
+            password_error = ''
+        email = self.request.get('email')
+        email_error = ''
+        if email:
+            if not re.match("^[\S]+@[\S]+\.[\S]+$", email):
+                email_error = 'That email is not valid.'
+                errors = True
+        if errors:
+            self.write_form(username=username, username_error=username_error,
+                password_error=password_error, email=email, email_error=email_error)
+        else:
+            # No validation errors
+            self.redirect('/unit2/welcome?username={0}'.format(username))
+
 app = webapp2.WSGIApplication([
     ('/', MainPage),
     ('/unit3/ascii', AsciiPage),
     ('/unit3/blog', BlogPage),
     ('/unit3/blog/newpost', NewBlogPost),
     ('/unit3/blog/([^/]+)', BlogPage),
+    ('/unit4/signup', UserSignup),
 ], debug=True)
