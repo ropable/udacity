@@ -191,32 +191,21 @@ def verify(G):
     show('Suspects', [t for t in (rhstokens-lhstokens) if t.isalnum()])
     show('Orphans ', lhstokens-rhstokens)
 
-JSON = grammar(r'''
-    object => [{] members [}] | [{][}]
-    members => pair , members | pair
-    pair => string [:] value
-    array => [[] elements []] | [[][]]
-    elements => value , elements | value
-    value => string | number | object | array
-    string => "[^"]*" | ""
-    number => int frac exp | int exp | int frac | int
-    int => [-]?[\d][\d]*
-    frac => [/.][\d]*
-    exp => [eE][+-]?[\d]+
-''', whitespace='\s*')
-
-#chars => char chars | char
-#char => ^\\"\/\b\f\r\t\n
-
-#string => " ([^"\\\\]*|\\\\["\\\\bfnrt\/]|\\\\u[0-9a-f]{4})* "
-#number => -?(?=[1-9]|0(?!\d))\d+(\.\d+)?([eE][+-]?\d+)
+JSON = grammar(r'''object => [{] members [}] | [{][}]
+members => pair , members | pair
+pair => string [:] value
+array => [[] elements []] | [[][]]
+elements => value , elements | value
+value => string | number | object | array
+string => "[^"]*" | ""
+number => int frac exp | int exp | int frac | int
+int => [-]?[\d][\d]*
+frac => [/.][\d]*
+exp => [eE][+-]?[\d]+''', whitespace='\s*')
 
 def json_parse(text):
     return parse('value', text, JSON)
 
-#["testing", 1, 2, 3]
-#-123.456e+789
-#{"age": 21, "state":"CO","occupation":"rides the rodeo"}
 def test_json_parser():
     # my new tests
     assert json_parse('-123') == (['value', ['number', ['int', '-123']]], '')
