@@ -1,3 +1,5 @@
+import itertools
+
 # HW 4-1
 # -----------------
 # User Instructions
@@ -14,6 +16,7 @@
 # An action is a tuple of (travelers, arrow), where the arrow is
 # '->' or '<-'. See the test() function below for some examples
 # of what your function's input and output should look like.
+
 def bsuccessors3(state):
     '''Return a dict of {state:action} pairs.  State is (here, there, light)
     where here and there are frozen sets of people, light is 0 if the light is
@@ -65,6 +68,7 @@ def test_bsuccessors2():
     return 'test_bsuccessors2 pass'
 
 print test_bsuccessors2()
+
 # HW 4-2
 # -----------------
 # User Instructions
@@ -84,6 +88,7 @@ print test_bsuccessors2()
 # where state is a tuple of volumes and action is one of ('fill', i),
 # ('empty', i), ('pour', i, j) where i and j are indices indicating the
 # glass number.
+
 def more_pour_problem(capacities, goal, start=None):
     '''The first argument is a tuple of capacities (numbers) of glasses; the
     goal is a number which we must achieve in some glass.  start is a tuple
@@ -93,13 +98,10 @@ def more_pour_problem(capacities, goal, start=None):
     On success return a path: a [state, action, state2, ...] list, where an
     action is one of ('fill', i), ('empty', i), ('pour', i, j), where
     i and j are indices indicating the glass number.'''
-    # IN: (1, 2, 4, 8), 4)
     if not start:
         # If we didn't receive a start state, assume that all glasses are empty.
         start = tuple([0 for i in range(len(capacities))])
     return shortest_path_search(start, pour_successors, capacities, pour_problem_goal, goal)
-
-    # OUT: [(0, 0, 0, 0), ('fill', 2), (0, 0, 4, 0)]
 
 def pour_successors(state, capacities):
     '''Return a dict of {state:action} pairs.  State is (here, there, light)
@@ -213,8 +215,8 @@ print test_more_pour()
 # assert statements in test_ride(), it should be marked correct.
 
 def subway(**lines):
-    """Define a subway map. Input is subway(linename='station1 station2...'...).
-    Convert that and return a dict of the form: {station:{neighbor:line,...},...}"""
+    '''Define a subway map. Input is subway(linename='station1 station2...'...).
+    Convert that and return a dict of the form: {station:{neighbor:line,...},...}'''
     d = {}
     # {'foresthills':{'backbay':'orange'}, 'state':{'aquarium':'blue','government':'blue','haymarket':'orange','downtown':'orange'} }
     for k,v in lines.items(): #k=line name, v=stations
@@ -248,31 +250,41 @@ boston = subway(
     red='alewife davis porter harvard central mit charles park downtown south umass mattapan')
 
 def ride(here, there, system=boston):
-    "Return a path on the subway system from here to there."
-    ## your code here
-    pass
+    '''Return a path on the subway system from here to there.
+    '''
+    if here == there: return [here]
+    return subway_path_search(here, subway_successors, system, there)
 
-def longest_ride(system):
-    """"Return the longest possible 'shortest path'
-    ride between any two stops in the system."""
-    ## your code here
-    pass
+def longest_ride(system=boston):
+    '''Return the longest possible 'shortest path' ride between any
+    two stops in the system.'''
+    longest_ride = None
+    for r in [r for r in itertools.combinations(system.keys(), 2)]:
+        next_ride = ride(r[0], r[1], system)
+        if not longest_ride or len(path_states(next_ride)) > len(path_states(longest_ride)):
+            longest_ride = next_ride
+    return longest_ride
 
-def shortest_path_search(start, successors, is_goal):
-    """Find the shortest path from start state to a state
-    such that is_goal(state) is true."""
-    if is_goal(start):
+def subway_successors(system, state):
+    '''Return a list of all legit successor stations to the input state.
+    Successors are (station, line) tuples.'''
+    return system[state].items()
+    
+def subway_path_search(start, successors, system, is_goal):
+    '''Find the shortest path from start state to a state
+    such that is_goal(state) is true.'''
+    if is_goal == start:
         return [start]
-    explored = set() # set of states we have visited
-    frontier = [ [start] ] # ordered list of paths we have blazed
+    explored = set()
+    frontier = [ [start] ]
     while frontier:
         path = frontier.pop(0)
         s = path[-1]
-        for (state, action) in successors(s).items():
+        for (state, action) in successors(system, s):
             if state not in explored:
                 explored.add(state)
                 path2 = path + [action, state]
-                if is_goal(state):
+                if state == is_goal:
                     return path2
                 else:
                     frontier.append(path2)
@@ -285,7 +297,7 @@ def path_states(path):
 def path_actions(path):
     "Return a list of actions in this path."
     return path[1::2]
-'''
+
 def test_ride():
     assert ride('mit', 'government') == [
         'mit', 'red', 'charles', 'red', 'park', 'green', 'government']
@@ -305,4 +317,3 @@ def test_ride():
     return 'test_ride passes'
 
 print test_ride()
-'''
