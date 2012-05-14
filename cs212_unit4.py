@@ -226,12 +226,11 @@ def subway(**lines):
                 # The station already exists; add neighbours on the new line.
                 if i == 0: # First station (one neighbour)
                     t = d[s] # Copy existing
-                    d[s] = {(stations[i+1]:k)}
+                    d[s] = dict(d[s].items() + [(stations[i+1], k)])
                 elif i == line_length: # Last station
-                    d[s].update(stations[i-1]:k)
+                    d[s] = dict(d[s].items() + [(stations[i-1], k)])
                 else:
-                    d[s].update(stations[i-1]:k)
-                    d[s].update(stations[i+1]:k)
+                    d[s] = dict(d[s].items() + [(stations[i-1], k), (stations[i+1], k)])
             else:
                 d[s] = {}
                 if i == 0: # First station (one neighbour)
