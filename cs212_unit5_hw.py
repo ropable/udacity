@@ -1,18 +1,4 @@
-# -----------------
-# User Instructions
-# 
-# In this problem, you will use a faster version of Pwin, which we will call
-# Pwin2, that takes a state as input but ignores whether it is player 1 or 
-# player 2 who starts. This will reduce the number of computations to about 
-# half. You will define a function, Pwin3, which will be called by Pwin2.
-#
-# Pwin3 will only take me, you, and pending as input and will return the 
-# probability of winning. 
-#
-# Keep in mind that the probability that I win from a position is always
-# (1 - probability that my opponent wins).
-
-
+import random
 from functools import update_wrapper
 
 def decorator(d):
@@ -56,6 +42,19 @@ def memo(f):
     _f.cache = cache
     return _f
 
+# -----------------
+# User Instructions
+# 
+# In this problem, you will use a faster version of Pwin, which we will call
+# Pwin2, that takes a state as input but ignores whether it is player 1 or 
+# player 2 who starts. This will reduce the number of computations to about 
+# half. You will define a function, Pwin3, which will be called by Pwin2.
+#
+# Pwin3 will only take me, you, and pending as input and will return the 
+# probability of winning. 
+#
+# Keep in mind that the probability that I win from a position is always
+# (1 - probability that my opponent wins).
 goal = 40
 other = {1:0, 0:1}
 
@@ -88,7 +87,6 @@ def Q_pig(state, action, Pwin):
         return (1 - Pwin(roll(state, 1))
                 + sum(Pwin(roll(state, d)) for d in (2,3,4,5,6))) / 6.
     raise ValueError
-
 
 @memo
 def Pwin(state):
@@ -141,7 +139,7 @@ def test_pwin2():
     assert abs(Pwin2((0, 19, 35, 4)) - 0.493173612834) <= epsilon
     return 'Pwin2 tests pass'
 
-print test_pwin2()
+#print test_pwin2()
 
 # -----------------
 # User Instructions
@@ -162,15 +160,12 @@ print test_pwin2()
 # strategy needs to beat hold_20_d in order for you to be
 # marked correct. Happy pigging!
 
-import random
-
-'''
-def Q_pig_d(state, action, Pwin_d):  
+def Q_pig_d(state, action, Pwin_d):
+    state2 = (state[0], state[1], state[2], state[3])
     if action == 'hold':
-        return 1 - Pwin(hold(state))
+        return 1 - Pwin_d(hold(state2))
     if action == 'roll':
-        return (1 - Pwin(roll(state, 1))
-                + sum(Pwin(roll(state, d)) for d in (2,3,4,5,6))) / 6.
+        return (1 - Pwin_d(roll(state2, 1)) + sum(Pwin_d(roll(state2, d)) for d in (2,3,4,5,6))) / 6.
     raise ValueError
     
 @memo
@@ -190,8 +185,8 @@ def best_action(state, actions, Q, U):
     
 def max_wins(state):
     "The optimal pig strategy chooses an action with the highest win probability."
-    return best_action(state, pig_actions, Q_pig_d, Pwin_d)
-'''
+    return best_action(state, pig_actions_d, Q_pig_d, Pwin_d)
+
 def pig_actions_d(state):
     '''The legal actions from a state. Usually, ["roll", "hold"].
     Exceptions: If double is "double", can only "accept" or "decline".
@@ -306,7 +301,116 @@ def test_double_pig():
     #assert strategy_compare(strategy_d, hold_20_d) > 60 # must win 60% of the points      
     return 'test_double_pig tests pass'
 
-print test_double_pig()
-print(strategy_compare(strategy_d, hold_20_d))
+#print test_double_pig()
+#print(strategy_compare(strategy_d, hold_20_d))
 #print(strategy_compare(clueless_d, hold_20_d))
 #print(strategy_compare(strategy_d, hold_20_d))
+
+# -----------------
+# User Instructions
+# 
+# This problem deals with the one-player game foxes_and_hens. This 
+# game is played with a deck of cards in which each card is labelled
+# as a hen 'H', or a fox 'F'. 
+# 
+# A player will flip over a random card. If that card is a hen, it is
+# added to the yard. If it is a fox, all of the hens currently in the
+# yard are removed.
+#
+# Before drawing a card, the player has the choice of two actions, 
+# 'gather' or 'wait'. If the player gathers, she collects all the hens
+# in the yard and adds them to her score. The drawn card is discarded.
+# If the player waits, she sees the next card. 
+#
+# Your job is to define two functions. The first is do(action, state), 
+# where action is either 'gather' or 'wait' and state is a tuple of 
+# (score, yard, cards). This function should return a new state with 
+# one less card and the yard and score properly updated.
+#
+# The second function you define, strategy(state), should return an 
+# action based on the state. This strategy should average at least 
+# 1.5 more points than the take5 strategy.
+
+def foxes_and_hens(strategy, foxes=7, hens=45):
+    '''Play the game of foxes and hens.'''
+    # A state is a tuple of (score-so-far, number-of-hens-in-yard, deck-of-cards)
+    state = (score, yard, cards) = (0, 0, 'F'*foxes + 'H'*hens)
+    while cards:
+        action = strategy(state)
+        state = (score, yard, cards) = do(action, state)
+    return score + yard
+
+def do(action, state):
+    "Apply action to state, returning a new state."
+    # Make sure you always use up one card.
+    # action is either 'gather' or 'wait'
+    (score, yard, cards) = state
+    if action == 'gather':
+        score += yard
+        yard = 0
+    # From here 'gather' and 'wait' are the same.
+    card = random.choice(cards)
+    if card == 'H' and action == 'wait':
+        yard += 1
+    elif card == 'F': # We drew a fox
+        yard = 0
+    cards = cards.replace(card, '', 1)
+    return (score, yard, cards)
+    
+def take5(state):
+    "A strategy that waits until there are 5 hens in yard, then gathers."
+    (score, yard, cards) = state
+    if yard < 5:
+        return 'wait'
+    else:
+        return 'gather'
+
+def average_score(strategy, N=1000):
+    return sum(foxes_and_hens(strategy) for _ in range(N)) / float(N)
+
+def superior(A, B=take5):
+    "Does strategy A have a higher average score than B, by more than 1.5 point?"
+    return average_score(A) - average_score(B) > 1.5
+
+def P_hen(state):
+    '''Probability of drawing a hen.'''
+    (score, yard, cards) = state
+    foxes = float(cards.count('F'))
+    hens = float(cards.count('H'))
+    if not hens:
+        return 0
+    elif not foxes:
+        return 1
+    else:
+        return hens/len(cards)
+
+def strategy(state):
+    (score, yard, cards) = state
+    # We can count cards
+    # Count the number of hens and foxes left; while it's more likely to draw a hen: wait.
+    if P_hen(state) == 1:
+        return 'wait'
+    elif P_hen(state) > ((1-P_hen(state)) * yard * 2.2):
+        return 'wait'
+    else:
+        return 'gather'
+
+def test_foxes_and_hens():
+    gather = do('gather', (4, 5, 'F'*4 + 'H'*10))
+    assert (gather == (9, 0, 'F'*3 + 'H'*10) or gather == (9, 0, 'F'*4 + 'H'*9))
+    wait = do('wait', (10, 3, 'FFHH'))
+    assert (wait == (10, 4, 'FFH') or wait == (10, 0, 'FHH'))
+    assert superior(strategy)
+    return 'Foxes and hens tests pass'
+
+print test_foxes_and_hens()
+#print(average_score(take5))
+        
+def Q_hen(state, action, P_hen):
+    '''The expected value of choosing action in state.'''
+    if action == 'gather':
+        return 1 - P_hen(state)
+    if action == 'wait':
+        return (1 - Pwin(roll(state, 1))
+                + sum(Pwin(roll(state, d)) for d in (2,3,4,5,6))) / 6.
+    raise ValueError
