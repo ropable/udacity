@@ -1,9 +1,11 @@
+import datetime
 import os
 import webapp2
 import jinja2
 import re
 import hmac
 import cgi
+import json
 from google.appengine.ext import db
 
 SALT = 'mmmsaltysalt'
@@ -12,8 +14,13 @@ template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
     autoescape=True)
 
+def datetimeformat(value, format='%H:%M %d-%m-%Y'):
+    return value.strftime(format)
+    
 def escape_text(s):
     return cgi.escape(s, quote=True)
+
+jinja_env.filters['datetimeformat'] = datetimeformat
 
 class Handler(webapp2.RequestHandler):
     def write(self, *a, **kw):
@@ -69,6 +76,24 @@ class BlogPage(Handler):
             e = BlogEntry.get_by_id(ids=int(entry))
             self.render('blog.html', single_entry=e)
             
+class BlogPageJSON(webapp2.RequestHandler):
+    def get(self, entry=None):
+        self.response.headers['Content-Type'] = 'application/json'
+        if not entry:
+            e = db.GqlQuery('SELECT * from BlogEntry ORDER BY created DESC LIMIT 10')
+            li = []
+            for i in e:
+                d = i.__dict__
+                li.append(d['_entity'])
+            for d in li:
+                d['created'] = datetime.datetime.strftime(d['created'], '%d-%m-%Y %H:%M')
+            self.response.out.write(json.dumps(li))
+        else:
+            e = BlogEntry.get_by_id(ids=int(entry))
+            d = e.__dict__['_entity']
+            d['created'] = datetime.datetime.strftime(d['created'], '%d-%m-%Y %H:%M')
+            self.response.out.write(json.dumps(d))
+
 class NewBlogPost(Handler):
     def get(self):
         self.render('new_entry_form.html')
@@ -79,7 +104,7 @@ class NewBlogPost(Handler):
         if subject and content:
             entry = BlogEntry(subject=subject, content=content)
             entry.put()
-            self.redirect('/unit3/blog/{0}'.format(entry.key().id()))
+            self.redirect('/blog/{0}'.format(entry.key().id()))
         else:
             error = "New blog post requires both a subject and a title."
             self.render('new_entry_form.html', subject=subject, content=content, error=error)
@@ -99,9 +124,9 @@ class WelcomeUser(Handler):
             if user:
                 self.render('welcome.html', username=escape_text(user.username))
             else:
-                self.redirect('/unit4/signup')
+                self.redirect('/blog/signup')
         else:
-            self.redirect('/unit4/signup')
+            self.redirect('/blog/signup')
 
 class UserSignup(Handler):
     def render_form(self, username='', username_error='', password_error='', email='', email_error=''):
@@ -161,7 +186,7 @@ class UserSignup(Handler):
             user.cookie = cookie
             user.put()
             self.response.headers.add_header('Set-Cookie', 'user_id={0}; Path=/'.format(cookie))
-            self.redirect('/unit4/welcome')
+            self.redirect('/blog/welcome')
 
 class UserLogin(Handler):
     def get(self):
@@ -169,7 +194,7 @@ class UserLogin(Handler):
         if cookie:
             user = db.GqlQuery("SELECT * FROM User WHERE cookie='{0}'".format(cookie)).get()
             if user:
-                self.redirect('/unit4/welcome')
+                self.redirect('/blog/welcome')
         self.render('login-form.html')
         
     def post(self):
@@ -181,19 +206,29 @@ class UserLogin(Handler):
             user = db.GqlQuery("SELECT * FROM User WHERE password='{0}'".format(hashed_pw)).get()
             if user:
                 logged_in = True
+                cookie = '{0}|{1}'.format(user.key().id(), hmac.new(SALT, username).hexdigest())
                 self.response.headers.add_header('Set-Cookie', 'user_id={0}; Path=/'.format(cookie))
         if logged_in:
-            self.redirect('/unit4/welcome')
+            self.redirect('/blog/welcome')
         else:
             self.render('login-form.html', login_error='Invalid login')
 
 class UserLogout(Handler):
     def get(self):
         self.response.headers.add_header('Set-Cookie', 'user_id=; Path=/')
-        self.redirect('/unit4/signup')
+        self.redirect('/blog/signup')
 
 app = webapp2.WSGIApplication([
     ('/', MainPage),
+    ('/blog', BlogPage),
+    ('/blog/newpost', NewBlogPost),
+    ('/blog/.json', BlogPageJSON),
+    ('/blog/signup', UserSignup),
+    ('/blog/welcome', WelcomeUser),
+    ('/blog/login', UserLogin),
+    ('/blog/logout', UserLogout),
+    ('/blog/([^/]+).json', BlogPageJSON),
+    ('/blog/([^/]+)', BlogPage),
     ('/unit3/ascii', AsciiPage),
     ('/unit3/blog', BlogPage),
     ('/unit3/blog/newpost', NewBlogPost),
@@ -202,4 +237,6 @@ app = webapp2.WSGIApplication([
     ('/unit4/login', UserLogin),
     ('/unit4/logout', UserLogout),
     ('/unit4/welcome', WelcomeUser),
+    ('/unit5/blog.json', BlogPageJSON),
+    ('/unit5/blog/([^/]+).json', BlogPageJSON),
 ], debug=True)

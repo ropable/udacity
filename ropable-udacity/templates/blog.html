@@ -5,23 +5,27 @@
         <link type=""text/css rel="stylesheet" href="/css/bootstrap.min.css">
     </head>
     <body>
-        <h1><a href="/unit3/blog">My Blog</a></h1>
-        <p><a href="/unit3/blog/newpost">Create a new entry</a></p>
+        <h1><a href="/blog">My Blog</a></h1>
+        <p><a href="/blog/newpost">Create a new entry</a></p>
+        <p><a href="/blog/.json">View all JSON</a></p>
         {% if latest_entries %}
             {% for entry in latest_entries %}
                 <div>
-                    <div class="subject"><h4>{{ entry.subject }} (created {{ entry.created }})</h4></div>
-                    <div class="content">{{ entry.content|safe }}</div>
-                    {#<div>{{ entry.key().id() }}</div>#}
-
+                    <div class="subject"><h4>{{ entry.subject }} (created {{ entry.created|datetimeformat }})</h4></div>
+                    <div class="content">
+                        <p>{{ entry.content|safe }}</p>
+                        <a href="/blog/{{ entry.key().id() }}">Permalink</a>
+                    </div>
                 </div>
                 <hr>
             {% endfor %}
         {% endif %}
         {% if single_entry %}
-            <div class="subject"><h4>{{ single_entry.subject }} (created {{ single_entry.created }})</h4></div>
-            <div class="content">{{ single_entry.content|safe }}</div>
-            {#<div>{{ single_entry.key().id() }}</div>#}
+            <div class="subject"><h4>{{ single_entry.subject }} (created {{ single_entry.created|datetimeformat }})</h4></div>
+            <div class="content">
+                <p>{{ single_entry.content|safe }}<p>
+                <a href="/blog/{{ single_entry.key().id() }}.json">JSON</a>
+            </div>
         {% endif %}
     </body>
 </html>
