@@ -1,3 +1,4 @@
+import logging
 import datetime
 import os
 import webapp2
@@ -6,21 +7,19 @@ import re
 import hmac
 import cgi
 import json
+import time
 from google.appengine.ext import db
+from google.appengine.api import memcache
 
 SALT = 'mmmsaltysalt'
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
     autoescape=True)
-
-def datetimeformat(value, format='%H:%M %d-%m-%Y'):
-    return value.strftime(format)
     
 def escape_text(s):
     return cgi.escape(s, quote=True)
 
-jinja_env.filters['datetimeformat'] = datetimeformat
 
 class Handler(webapp2.RequestHandler):
     def write(self, *a, **kw):
@@ -67,14 +66,35 @@ class BlogEntry(db.Model):
     content = db.TextProperty(required=True)
     created = db.DateTimeProperty(auto_now_add=True)
     
+def top_posts(update=False):
+    posts = memcache.get('top')
+    posts_time = memcache.get('top_time')
+    if posts is None or update:
+        posts = db.GqlQuery('SELECT * from BlogEntry ORDER BY created DESC LIMIT 10')
+        posts = list(posts)
+        memcache.set('top', posts)
+        memcache.set('top_time', int(time.time()))
+        posts_time = memcache.get('top_time')
+    return posts, posts_time
+    
+def single_post(key):
+    post = memcache.get(key)
+    post_time = memcache.get(key + '_time')
+    if post is None:
+        post = BlogEntry.get_by_id(ids=int(key))
+        memcache.set(key, post)
+        memcache.set(key + '_time', int(time.time()))
+        post_time = memcache.get(key + '_time')
+    return post, post_time
+    
 class BlogPage(Handler):
     def get(self, entry=None):
         if not entry:
-            e = db.GqlQuery('SELECT * from BlogEntry ORDER BY created DESC LIMIT 10')
-            self.render('blog.html', latest_entries=e)
+            posts, posts_time = top_posts()
+            self.render('blog.html', latest_entries=posts, queried=(int(time.time()) - posts_time))
         else:
-            e = BlogEntry.get_by_id(ids=int(entry))
-            self.render('blog.html', single_entry=e)
+            post, post_time = single_post(entry)
+            self.render('blog.html', single_entry=post, queried=(int(time.time()) - post_time))
             
 class BlogPageJSON(webapp2.RequestHandler):
     def get(self, entry=None):
@@ -104,6 +124,8 @@ class NewBlogPost(Handler):
         if subject and content:
             entry = BlogEntry(subject=subject, content=content)
             entry.put()
+            # Update the front page cache.
+            posts, posts_time = top_posts(update=True)
             self.redirect('/blog/{0}'.format(entry.key().id()))
         else:
             error = "New blog post requires both a subject and a title."
@@ -218,25 +240,22 @@ class UserLogout(Handler):
         self.response.headers.add_header('Set-Cookie', 'user_id=; Path=/')
         self.redirect('/blog/signup')
 
+class FlushCache(Handler):
+    def get(self):
+        memcache.flush_all()
+        self.redirect('/blog')
+        
 app = webapp2.WSGIApplication([
     ('/', MainPage),
     ('/blog', BlogPage),
-    ('/blog/newpost', NewBlogPost),
     ('/blog/.json', BlogPageJSON),
     ('/blog/signup', UserSignup),
     ('/blog/welcome', WelcomeUser),
     ('/blog/login', UserLogin),
     ('/blog/logout', UserLogout),
+    ('/blog/newpost', NewBlogPost),
+    ('/blog/flush', FlushCache),
     ('/blog/([^/]+).json', BlogPageJSON),
     ('/blog/([^/]+)', BlogPage),
-    ('/unit3/ascii', AsciiPage),
-    ('/unit3/blog', BlogPage),
-    ('/unit3/blog/newpost', NewBlogPost),
-    ('/unit3/blog/([^/]+)', BlogPage),
-    ('/unit4/signup', UserSignup),
-    ('/unit4/login', UserLogin),
-    ('/unit4/logout', UserLogout),
-    ('/unit4/welcome', WelcomeUser),
-    ('/unit5/blog.json', BlogPageJSON),
-    ('/unit5/blog/([^/]+).json', BlogPageJSON),
+    ('/ascii', AsciiPage),
 ], debug=True)
