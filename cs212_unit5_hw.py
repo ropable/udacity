@@ -209,7 +209,8 @@ def pig_actions_d(state):
 def strategy_d(state):
     (p, me, you, pending, double) = state
     return ('hold' if (pending >= 20 or me + pending >= goal) else
-            'double' if (me > you > 0 and double != 2) else
+            #'double' if (me > you > 0 and double != 2) else
+            'double' if (me + pending >= 35 and double != 2) else
             'roll')
 
 def hold_20_d(state):
@@ -298,11 +299,11 @@ def test_double_pig():
     assert set(pig_actions_d((1, 20, 30, 5, 2)))        == set(['hold', 'roll']) 
     assert set(pig_actions_d((0, 5, 5, 5, 1)))          == set(['roll', 'hold', 'double'])
     assert set(pig_actions_d((1, 10, 15, 6, 'double'))) == set(['accept', 'decline']) 
-    #assert strategy_compare(strategy_d, hold_20_d) > 60 # must win 60% of the points      
+    assert strategy_compare(strategy_d, hold_20_d) > 60 # must win 60% of the points      
     return 'test_double_pig tests pass'
 
-#print test_double_pig()
-#print(strategy_compare(strategy_d, hold_20_d))
+print test_double_pig()
+print(strategy_compare(strategy_d, hold_20_d))
 #print(strategy_compare(clueless_d, hold_20_d))
 #print(strategy_compare(strategy_d, hold_20_d))
 
