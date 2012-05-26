@@ -14,6 +14,7 @@
 # order. For example, for the input string 'ANAGRAMS' the set that 
 # your function returns should include 'AN ARM SAG', but should NOT 
 # include 'ARM SAG AN', or 'SAG AN ARM', etc...
+from udacity.utils import memo
 
 def anagrams(phrase, shortest=2):
     '''Return a set of phrases with words from WORDS that form anagram
@@ -22,7 +23,7 @@ def anagrams(phrase, shortest=2):
     lexicographic order (not all permutations).'''
     anagrams = set()
     frontier = []
-    phrase = phrase.replace(' ', '') # Replace spaces.
+    phrase = phrase.replace(' ', '').upper() # Replace spaces, convert to uppercase.
     # Get our frontier started.
     for t in extend_anagram(phrase, shortest):
         frontier.append( (t[0], [t[1]]) ) # Tuple: ([], remaining phrase)
@@ -36,6 +37,7 @@ def anagrams(phrase, shortest=2):
                 frontier.append(path2)
     return anagrams
 
+@memo
 def extend_anagram(phrase, shortest):
     '''
     Pass in a word, return a list of tuples: [(remainder, word1), (remainder, word2),...]
