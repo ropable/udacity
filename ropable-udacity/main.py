@@ -19,9 +19,6 @@ template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
     autoescape=True)
 
-def escape_text(s):
-    return cgi.escape(s, quote=True)
-
 class Handler(webapp2.RequestHandler):
     def write(self, *a, **kw):
         self.response.out.write(*a, **kw)
@@ -39,6 +36,4 @@ class MainPage(Handler):
         self.render('front.html')
 
 
-app = webapp2.WSGIApplication(
-    [('/', MainPage)] + blog.URLS + asciichan.URLS
-], debug=True)
+app = webapp2.WSGIApplication([('/', MainPage)] + blog.URLS + asciichan.URLS, debug=True)

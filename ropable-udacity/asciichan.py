@@ -29,5 +29,5 @@ class AsciiPage(Handler):
             self.render_front(title, art, error)
 
 URLS = [
-    ('/ascii', asciichan.AsciiPage),
+    ('/ascii', AsciiPage),
     ]

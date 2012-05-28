@@ -197,15 +197,18 @@ def single_post(key):
         post_time = memcache.get(key + '_time')
     return post, post_time
 
+def escape_text(s):
+    return cgi.escape(s, quote=True)
+
 URLS = [
-    ('/blog', blog.BlogPage),
-    ('/blog/.json', blog.BlogPageJSON),
-    ('/blog/signup', blog.UserSignup),
-    ('/blog/welcome', blog.WelcomeUser),
-    ('/blog/login', blog.UserLogin),
-    ('/blog/logout', blog.UserLogout),
-    ('/blog/newpost', blog.NewBlogPost),
-    ('/blog/flush', blog.FlushCache),
-    ('/blog/([^/]+).json', blog.BlogPageJSON),
-    ('/blog/([^/]+)', blog.BlogPage),
+    ('/blog', BlogPage),
+    ('/blog/.json', BlogPageJSON),
+    ('/blog/signup', UserSignup),
+    ('/blog/welcome', WelcomeUser),
+    ('/blog/login', UserLogin),
+    ('/blog/logout', UserLogout),
+    ('/blog/newpost', NewBlogPost),
+    ('/blog/flush', FlushCache),
+    ('/blog/([^/]+).json', BlogPageJSON),
+    ('/blog/([^/]+)', BlogPage),
     ]
