@@ -10,8 +10,8 @@
                 <h1>Page history: {{ page.name }}</h1>
             </div>
             <div class="span2" id="edit_history">
-                {% if user %}<a href="/wiki/_edit{{ page.name }}">Edit</a> | {% endif %}
-                <a href="/wiki{{ page.name }}">View</a>
+                {% if user %}<a href="/wiki/_edit/{{ page.name }}">Edit</a> | {% endif %}
+                <a href="/wiki/{{ page.name }}">View</a>
             </div>
             <div class="span2" id="user_info">
                 {% if user %}{{ user.username }} (<a href="/wiki/logout">logout</a>)
@@ -28,8 +28,8 @@
                 {{ h.content }}
             </div>
             <div class="span2">
-                <a href="/wiki{{ h.page.name }}?v={{ h.version }}">View</a>
-                {% if user %}| Edit{% endif %}
+                <a href="/wiki/{{ h.page.name }}?v={{ h.version }}">View</a>
+                {% if user %}| <a href="/wiki/_edit/{{ h.page.name }}?v={{ h.version }}">Edit</a>{% endif %}
             </div>
         </div>
         {% endfor %}

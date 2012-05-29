@@ -10,8 +10,8 @@
                 <h1>{% if page %}{{ page.name }}{% else %}SuperAwesomeAppEngineWiki{% endif %}</h1>
             </div>
             <div class="span2" id="edit_history">
-                {% if user %}<a href="/wiki/_edit{{ page.name }}">Edit</a> | {% endif %}
-                <a href="/wiki/_history{{ page.name }}">History</a>
+                {% if user %}<a href="/wiki/_edit/{{ page.name }}">Edit</a> | {% endif %}
+                <a href="/wiki/_history/{{ page.name }}">History</a>
             </div>
             <div class="span2" id="user_info">
                 {% if user %}{{ user.username }} (<a href="/wiki/logout">logout</a>)

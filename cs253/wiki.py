@@ -1,6 +1,7 @@
 import re
 import asciichan
 import auth
+import logging
 from google.appengine.ext import db
 from google.appengine.api import memcache
 
@@ -20,76 +21,100 @@ class WikiHistory(db.Model):
     created = db.DateTimeProperty(auto_now_add=True)
 
 
-class WikiFrontPage(asciichan.Handler):
-    def get(self):
-        self.redirect('/wiki/')
-        
-        
 class WikiPage(asciichan.Handler):
-    def get(self, page_name):
+    def get(self, page_name=None):
         user = get_user(self.request)
-        version = self.request.get('v')
+        # Assume a 'blank' page name means 'front' (also handle trailing forward slash).
+        if not page_name or page_name == '/':
+            page_name = 'front'
+        else:
+            page_name = page_name[1:]
         # Try to get this page from the cache.
         page = page_content(page_name)
-        #print(page)
+        version = self.request.get('v')
         if user and not page:
-            self.redirect('/wiki/_edit{0}'.format(page_name))
-        if page and version:
+            self.redirect('/wiki/_edit/{0}'.format(page_name))
+        elif page and version:
             # Serve up the relevant page version.
             history = page_history(page, version)
             self.render('wiki.html', user=user, page=page, content=history.content)
-        if page:
+        elif page and not version:
+            if user:
+                logging.info('User {0} opened wiki page {1} | {2}'.format(user.username, page_name, str(self.request)))
+            else:
+                logging.info('Anon user opened wiki page {0} | {1}'.format(page_name, str(self.request)))
             self.render('wiki.html', user=user, page=page, content=page.content)
         else:
-            self.redirect('/wiki/_edit{0}'.format(page_name))
-        # Page doesn't exist yet? Redirect to the edit page.
-        
-
+            # Render a "Does not exit" placeholder for anon users.
+            self.render('wiki_blank.html', name=page_name)
+    
 class EditPage(asciichan.Handler):
-    def get(self, page_name):
+    def get(self, page_name=None):
         user = get_user(self.request)
+        # Assume a 'blank' page name means 'front' (also handle trailing forward slash).
+        if not page_name or page_name == '/':
+            page_name = 'front'
+        else:
+            page_name = page_name[1:]
         # Get any existing page content from the cache.
         page = page_content(page_name)
-        self.render('edit_wiki.html', user=user, page=page)
+        version = self.request.get('v')
+        if not user:
+            # Anon users can't edit.
+            self.redirect('/wiki/login')
+        elif user and page and version:
+            # User wants to use an older version.
+            history = page_history(page, version)
+            self.render('edit_wiki.html', user=user, page=page, content=history.content)
+        else:
+            # User logged in - edit as normal.
+            self.render('edit_wiki.html', user=user, page=page)
 
     def post(self, page_name):
         content = self.request.get('content')
+        page_name = page_name[1:]
         page = page_content(page_name)
         user = get_user(self.request)
         if content and page:
             if content == page.content: # Save needless versions being created.
-                self.redirect('/wiki{0}'.format(page_name))
+                self.redirect('/wiki/{0}'.format(page_name))
             else:
                 # Edit an existing page.
                 page.content = content
                 page.put()
-                history = list(db.GqlQuery("SELECT * FROM WikiHistory WHERE page=:1", page.key()))[0]
+                history = list(db.GqlQuery("SELECT * FROM WikiHistory WHERE page=:1 ORDER BY created DESC", page.key()))[0]
                 new_history = WikiHistory(page=page, user=user, version=history.version+1, content=content)
                 new_history.put()
                 page = page_content(page_name, update=True)
-                self.redirect('/wiki{0}'.format(page_name))
+                logging.info('User {0} edited wiki page {1} | {2}'.format(user.username, page_name, str(self.request)))
+                self.redirect('/wiki/{0}'.format(page_name))
         elif content and not page:
             # Create a new page, plus history.
             page = Wiki(name=page_name, user=user, content=content)
             page.put()
             history = WikiHistory(page=page, user=user, version=1, content=content)
             history.put()
-            self.redirect('/wiki{0}'.format(page_name))
+            logging.info('User {0} created wiki page {1} | {2}'.format(user.username, page_name, str(self.request)))
+            self.redirect('/wiki/{0}'.format(page_name))
         else:
             error = 'Please input some content!'
             self.render('edit_wiki.html', name=page_name, error=error)
 
+
 class PageHistory(asciichan.Handler):
     def get(self, page_name):
         user = get_user(self.request)
+        page_name = page_name[1:]
         page = page_content(page_name)
         if page:
             history = db.GqlQuery("SELECT * FROM WikiHistory WHERE page=:1 ORDER BY created DESC", page.key())
             history = list(history)
             self.render('wiki_history.html', user=user, page=page, history=history)
-        if user and not page:
-            self.redirect('/wiki/_edit{0}'.format(page_name))
-            
+        elif user and not page:
+            self.redirect('/wiki/_edit/{0}'.format(page_name))
+        else:
+            self.render('wiki_blank.html', name=page_name)
+
         
 def page_content(page_name, update=False):
     page = memcache.get(page_name)
@@ -116,12 +141,12 @@ def get_user(request):
 
 PAGE_RE = r'(/(?:[a-zA-Z0-9_-]+/?)*)'
 URLS = [
-    ('/wiki', WikiFrontPage),
+    ('/wiki', WikiPage),
     ('/wiki/signup', auth.UserSignup),
-    #('/wiki/welcome', auth.WelcomeUser),
     ('/wiki/login', auth.UserLogin),
     ('/wiki/logout', auth.UserLogout),
     ('/wiki/_edit' + PAGE_RE, EditPage),
     ('/wiki/_history' + PAGE_RE, PageHistory),
+    ('/wiki/_edit', EditPage),
     ('/wiki' + PAGE_RE, WikiPage),
     ]

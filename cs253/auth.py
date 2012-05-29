@@ -1,3 +1,4 @@
+import logging
 import re
 import asciichan
 import hmac
@@ -70,8 +71,9 @@ class UserSignup(asciichan.Handler):
             cookie = '{0}|{1}'.format(user.key().id(), hmac.new(SALT, username).hexdigest())
             user.cookie = cookie
             user.put()
+            logging.info('User created OK {0} | {1}'.format(user.username, str(self.request)))
             self.response.headers.add_header('Set-Cookie', 'user_id={0}; Path=/'.format(cookie))
-            self.redirect('/wiki/welcome')
+            self.redirect('/wiki')
 
 
 class UserLogin(asciichan.Handler):
@@ -95,8 +97,10 @@ class UserLogin(asciichan.Handler):
                 cookie = '{0}|{1}'.format(user.key().id(), hmac.new(SALT, username).hexdigest())
                 self.response.headers.add_header('Set-Cookie', 'user_id={0}; Path=/'.format(cookie))
         if logged_in:
+            logging.info('Logged in OK {0} | {1}'.format(user.username, str(self.request)))
             self.redirect('/wiki')
         else:
+            logging.warning('Invalid login {0} | {1}'.format(user.username, str(self.request)))
             self.render('login-form.html', login_error='Invalid login')
 
 
@@ -117,7 +121,7 @@ class WelcomeUser(asciichan.Handler):
 class UserLogout(asciichan.Handler):
     def get(self):
         self.response.headers.add_header('Set-Cookie', 'user_id=; Path=/')
-        self.redirect('/wiki/signup')
+        self.redirect('/wiki')
 
 
 def escape_text(s):

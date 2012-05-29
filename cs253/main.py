@@ -10,5 +10,4 @@ class MainPage(asciichan.Handler):
     def get(self):
         self.render('front.html')
 
-app = webapp2.WSGIApplication([('/', MainPage)] + wiki.URLS, debug=True)
-#app = webapp2.WSGIApplication([('/', MainPage)] + blog.URLS + asciichan.URLS + wiki.URLS, debug=True)
+app = webapp2.WSGIApplication([('/', MainPage)] + blog.URLS + asciichan.URLS + wiki.URLS, debug=True)
