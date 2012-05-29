@@ -1,5 +1,5 @@
-import sys
-sys.path.append('C:\\Python27\\udacity\\cs253')
+#import sys
+#sys.path.append('C:\\Python27\\udacity\\cs253')
 import webapp2
 import asciichan
 import blog

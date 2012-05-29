@@ -1,16 +1,17 @@
 <!DOCTYPE html> 
 <html lang="en">
     <head>
-        <title>Edit page: {{ page.name }}</title>
+        <title>Edit page: {{ page_name }}</title>
         <link type="text/css" rel="stylesheet" href="/css/bootstrap.min.css">
+        <link type="text/css" rel="stylesheet" href="/js/css/redactor.css" />
     </head>
     <body>
         <div class="row" id="header">
             <div class="span8">
-                <h1>Edit page: {{ page.name }}</h1>
+                <h1>Edit page: {{ page_name }}</h1>
             </div>
             <div class="span2" id="edit_history">
-                <a href="/wiki/_history/{{ page.name }}">History</a>
+                {% if page %}<a href="/wiki/_history/{{ page.name }}">History</a>{% endif %}
             </div>
             <div class="span2" id="user_info">
                 {% if user %}{{ user.username }} (<a href="/wiki/logout">logout</a>){% endif %}
@@ -24,7 +25,7 @@
                 <div class="control-group">
                     <label class="control-label" for="title">HTML content:</label>
                     <div class="controls">
-                        <textarea class="input-xlarge span10" rows="10" name="content">{{ content }}</textarea>
+                        <textarea id="redactor_content" class="input-xlarge span10" rows="10" name="content">{{ content }}</textarea>
                     </div>
                 </div>
                 <div class="form-actions">
@@ -34,5 +35,18 @@
         </form>
             </div>
         </div>
+        <script src="/js/jquery-1.7.min.js"></script>
+        <script src="/js/bootstrap.min.js"></script>
+        <script src="/js/redactor.min.js"></script>
+        <script type="text/javascript">
+            $(document).ready(
+                function()
+                {
+                    //var
+                    $('#redactor_content').redactor();
+                    //$("div#page").
+                }
+            );
+        </script>
     </body>
 </html>

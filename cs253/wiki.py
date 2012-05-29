@@ -65,10 +65,12 @@ class EditPage(asciichan.Handler):
         elif user and page and version:
             # User wants to use an older version.
             history = page_history(page, version)
-            self.render('edit_wiki.html', user=user, page=page, content=history.content)
+            self.render('edit_wiki.html', user=user, page_name=page_name, page=page, content=history.content)
+        elif user and page:
+            # User logged in, existing page - edit as normal.
+            self.render('edit_wiki.html', user=user, page_name=page_name, page=page, content=page.content)
         else:
-            # User logged in - edit as normal.
-            self.render('edit_wiki.html', user=user, page=page)
+            self.render('edit_wiki.html', user=user, page_name=page_name)
 
     def post(self, page_name):
         content = self.request.get('content')
