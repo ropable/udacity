@@ -1,0 +1,38 @@
+<!DOCTYPE html> 
+<html lang="en">
+    <head>
+        <title>Edit page: {{ page.name }}</title>
+        <link type="text/css" rel="stylesheet" href="/css/bootstrap.min.css">
+    </head>
+    <body>
+        <div class="row" id="header">
+            <div class="span8">
+                <h1>Edit page: {{ page.name }}</h1>
+            </div>
+            <div class="span2" id="edit_history">
+                <a href="/wiki/_history{{ page.name }}">History</a>
+            </div>
+            <div class="span2" id="user_info">
+                {% if user %}{{ user.username }} (<a href="/wiki/logout">logout</a>){% endif %}
+            </div>
+        </div>
+        <div class="row">
+            <div class="span12">
+            <form class="form-horizontal" method="post">
+            {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+            <fieldset>
+                <div class="control-group">
+                    <label class="control-label" for="title">HTML content:</label>
+                    <div class="controls">
+                        <textarea class="input-xlarge span10" rows="10" name="content">{% if page %}{{ page.content }}{% endif %}</textarea>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </fieldset>
+        </form>
+            </div>
+        </div>
+    </body>
+</html>
