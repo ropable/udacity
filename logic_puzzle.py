@@ -30,30 +30,21 @@ then you would return:
 """
 import itertools
 
-
-days = {1:'Monday', 2:'Tuesday', 3:'Wednesday', 4:'Thursday', 5:'Friday'}
-people = ['Hamming', 'Knuth', 'Minsky', 'Simon', 'Wilkes']
-items = ['laptop', 'droid', 'tablet', 'iphone']
-professions = ['programmer', 'writer', 'manager', 'designer',]
-
 def day_after(d1, d2):
-    '''Day d1 is the day after d2 if d1-d2 == 1'''
+    "Day d1 is the day after d2 if d1-d2 == 1"
     return d1-d2 == 1
 
 def logic_puzzle():
     "Return a list of the names of the people, in the order they arrive."
     days = [Monday, Tuesday, Wednesday, Thursday, Friday] = [1, 2, 3, 4, 5]
     orderings = list(itertools.permutations(days))
-    return next((Hamming, Knuth, Minsky, Simon, Wilkes)
+    d = next((Hamming, Knuth, Minsky, Simon, Wilkes)
         for (laptop, droid, tablet, iphone, lunch) in orderings
-            if laptop is Wednesday
-            if tablet is not Friday
+            if laptop is Wednesday and tablet is not Friday and (iphone is Tuesday or tablet is Tuesday)
         for (programmer, writer, manager, designer, admin) in orderings
-            if designer is not Thursday
-            if designer is not droid
+            if designer is not Thursday and designer is not droid and manager is not tablet
         for (Hamming, Knuth, Minsky, Simon, Wilkes) in orderings
-            if day_after(Knuth, Simon)
-            if day_after(Knuth, manager)
-            if Wilkes is not programmer
-            if Minsky is not writer
+            if day_after(Knuth, Simon) and day_after(Knuth, manager) and Wilkes is not programmer and Minsky is not writer and Knuth is not manager and ((Wilkes is laptop and writer is Monday) or (Wilkes is Monday and writer is laptop)) and ((Wilkes is programmer and Hamming is droid) or (Wilkes is droid and Hamming is programmer))
     )
+    l = sorted(zip(d, ['Hamming', 'Knuth', 'Minsky', 'Simon', 'Wilkes']))
+    return [b for a, b in l]
