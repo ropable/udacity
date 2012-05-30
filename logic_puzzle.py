@@ -1,4 +1,4 @@
-"""
+'''
 UNIT 2: Logic Puzzle
 
 You will write code to solve the following logic puzzle:
@@ -27,7 +27,7 @@ then you would return:
 ['Hamming', 'Knuth', 'Minsky', 'Simon', 'Wilkes']
 
 (You can assume that the days mentioned are all in the same week.)
-"""
+'''
 import itertools
 
 def day_after(d1, d2):
