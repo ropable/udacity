@@ -31,21 +31,29 @@ then you would return:
 import itertools
 
 
-days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+days = {1:'Monday', 2:'Tuesday', 3:'Wednesday', 4:'Thursday', 5:'Friday'}
 people = ['Hamming', 'Knuth', 'Minsky', 'Simon', 'Wilkes']
 items = ['laptop', 'droid', 'tablet', 'iphone']
 professions = ['programmer', 'writer', 'manager', 'designer',]
 
+def day_after(d1, d2):
+    '''Day d1 is the day after d2 if d1-d2 == 1'''
+    return d1-d2 == 1
+
 def logic_puzzle():
     "Return a list of the names of the people, in the order they arrive."
-    ## your code here; you are free to define additional functions if needed
     days = [Monday, Tuesday, Wednesday, Thursday, Friday] = [1, 2, 3, 4, 5]
     orderings = list(itertools.permutations(days))
     return next((Hamming, Knuth, Minsky, Simon, Wilkes)
-        for (laptop, droid, tablet, iphone, banana) in orderings
-        for (programmer, writer, manager, designer, garbo) in orderings
+        for (laptop, droid, tablet, iphone, lunch) in orderings
+            if laptop is Wednesday
+            if tablet is not Friday
+        for (programmer, writer, manager, designer, admin) in orderings
+            if designer is not Thursday
+            if designer is not droid
         for (Hamming, Knuth, Minsky, Simon, Wilkes) in orderings
-            if programmer is not Wilkes
-            if writer is not Minsky
+            if day_after(Knuth, Simon)
+            if day_after(Knuth, manager)
+            if Wilkes is not programmer
+            if Minsky is not writer
     )
-
