@@ -50,6 +50,7 @@ Your task is to write the function poly and the following additional functions:
 They are described below; see the test_poly function for examples.
 '''
 import itertools
+from copy import copy
 
 def poly(coefs):
     '''Return a function that represents the polynomial with these coefficients.
@@ -68,11 +69,18 @@ def poly(coefs):
     for i, v in enumerate(coefs):
         if i == 0:
             if v != 0: l.append(str(v))
+        elif i == 1:
+            if v > 1:
+                l.append('{0} * x'.format(v))
+            elif v == 1:
+                l.append('x')
         else:
-            if v != 0: l.append('{0} * x**{1}'.format(v, i))
+            if v > 1:
+                l.append('{0} * x**{1}'.format(v, i))
+            elif v == 1:
+                l.append('x**{0}'.format(i))
     l.reverse()
     poly.__name__ = ' + '.join(l)
-    poly.__name__ = poly.__name__.replace('x**1', 'x').replace('1 * ', '')
     return poly
 
 def is_poly(x):
@@ -95,27 +103,54 @@ def sub(p1, p2):
 
 def mul(p1, p2):
     "Return a new polynomial which is the product of polynomials p1 and p2."
-    l = [i for i in itertools.izip_longest(p1.coefs, p2.coefs, fillvalue=0)]
-    #l = tuple([a * b for a, b in l])
-    #return l
     new_polys = []
-    if len(p1.coefs) <= len(p2.coefs):
-        p_short, p_other = p1, p2
-    else:
-        p_short, p_other = p2, p1
-
-    for c in p_short.coefs:
-        for i, v in enumerate(p_other.coefs):
-            t = i * [0] # Pad the list with zeros
-            t.append(v * c)
-        t = tuple(t)
-        new_polys.append(t)
-    return new_polys
-
+    for i,a in enumerate(p1.coefs):
+        # Pad the start of the list with zeros, as req'd.
+        new = i * [0]
+        for b in p2.coefs:
+            new.append(a*b)
+        new_polys.append(new)
+    # Pad the end of each list with zeros so they are all the same length.
+    longest = len(max(new_polys, key=len))
+    for i in new_polys:
+        while len(i) < longest:
+            i.append(0)
+    # Zip the lists together.
+    new_polys = zip(*new_polys)
+    coefs = tuple([sum(i) for i in new_polys])
+    return poly(coefs)
+    
 def power(p, n):
     "Return a new polynomial which is p to the nth power (n a non-negative integer)."
-    pass
+    p1 = copy(p)
+    for i in range(n-1):
+        p1 = mul(p1, p)
+    return p1
+'''
+If your calculus is rusty (or non-existant), here is a refresher:
+The deriviative of a polynomial term (c * x**n) is (c*n * x**(n-1)).
+The derivative of a sum is the sum of the derivatives.
+So the derivative of (30 * x**2 + 20 * x + 10) is (60 * x + 20).
 
+The integral is the anti-derivative:
+The integral of 60 * x + 20 is  30 * x**2 + 20 * x + C, for any constant C.
+Any value of C is an equally good anti-derivative.  We allow C as an argument
+to the function integral (with default C=0).
+'''
+def deriv(p):
+    "Return the derivative of a function p (with respect to its argument)."
+    l = list(p.coefs)
+    l = [i*v for i, v in enumerate(l)]
+    l.pop(0)
+    return poly(tuple(l))
+
+def integral(p, C=0):
+    "Return the integral of a function p (with respect to its argument)."
+    l = list(p.coefs)
+    l = [v/(i+1) for i, v in enumerate(l)]
+    l = [C] + l
+    return poly(tuple(l))
+    
 def same_name(name1, name2):
     '''I define this function rather than doing name1 == name2 to allow for some
     variation in naming conventions.'''
@@ -137,54 +172,31 @@ def test_poly():
 
     p3 = poly((0, 0, 0, 1))
     assert p3.__name__ == 'x**3'
-    #p9 = mul(p3, mul(p3, p3))
-    #assert p9(2) == 512
+    p9 = mul(p3, mul(p3, p3))
+    assert p9(2) == 512
+    assert p9.__name__ == 'x**9'
     p4 =  add(p1, p3)
     assert same_name(p4.__name__, 'x**3 + 30 * x**2 + 20 * x + 10')
-
     assert same_name(poly((1, 1)).__name__, 'x + 1')
-    #assert same_name(power(poly((1, 1)), 10).__name__,
-    #        'x**10 + 10 * x**9 + 45 * x**8 + 120 * x**7 + 210 * x**6 + 252 * x**5 + 210' +
-    #        ' * x**4 + 120 * x**3 + 45 * x**2 + 10 * x + 1')
-
+    assert same_name(power(poly((1, 1)), 10).__name__,
+            'x**10 + 10 * x**9 + 45 * x**8 + 120 * x**7 + 210 * x**6 + 252 * x**5 + 210' +
+            ' * x**4 + 120 * x**3 + 45 * x**2 + 10 * x + 1')
     assert add(poly((10, 20, 30)), poly((1, 2, 3))).coefs == (11,22,33)
     assert sub(poly((10, 20, 30)), poly((1, 2, 3))).coefs == (9,18,27)
-    #assert mul(poly((10, 20, 30)), poly((1, 2, 3))).coefs == (10, 40, 100, 120, 90)
-    #assert power(poly((1, 1)), 2).coefs == (1, 2, 1)
-    #assert power(poly((1, 1)), 10).coefs == (1, 10, 45, 120, 210, 252, 210, 120, 45, 10, 1)
+    assert mul(poly((10, 20, 30)), poly((1, 2, 3))).coefs == (10, 40, 100, 120, 90)
+    assert power(poly((1, 1)), 2).coefs == (1, 2, 1)
+    assert power(poly((1, 1)), 10).coefs == (1, 10, 45, 120, 210, 252, 210, 120, 45, 10, 1)
 
-    #assert deriv(p1).coefs == (20, 60)
-    #assert integral(poly((20, 60))).coefs == (0, 20, 30)
+    assert deriv(p1).coefs == (20, 60)
+    assert integral(poly((20, 60))).coefs == (0, 20, 30)
     p5 = poly((0, 1, 2, 3, 4, 5))
     assert same_name(p5.__name__, '5 * x**5 + 4 * x**4 + 3 * x**3 + 2 * x**2 + x')
     assert p5(1) == 15
     assert p5(2) == 258
-    #assert same_name(deriv(p5).__name__,  '25 * x**4 + 16 * x**3 + 9 * x**2 + 4 * x + 1')
-    #assert deriv(p5)(1) == 55
-    #assert deriv(p5)(2) == 573
+    assert same_name(deriv(p5).__name__,  '25 * x**4 + 16 * x**3 + 9 * x**2 + 4 * x + 1')
+    assert deriv(p5)(1) == 55
+    assert deriv(p5)(2) == 573
     print('test_poly passes')
-
-
-'''
-If your calculus is rusty (or non-existant), here is a refresher:
-The deriviative of a polynomial term (c * x**n) is (c*n * x**(n-1)).
-The derivative of a sum is the sum of the derivatives.
-So the derivative of (30 * x**2 + 20 * x + 10) is (60 * x + 20).
-
-The integral is the anti-derivative:
-The integral of 60 * x + 20 is  30 * x**2 + 20 * x + C, for any constant C.
-Any value of C is an equally good anti-derivative.  We allow C as an argument
-to the function integral (withh default C=0).
-'''
-
-def deriv(p):
-    "Return the derivative of a function p (with respect to its argument)."
-    pass
-
-
-def integral(p, C=0):
-    "Return the integral of a function p (with respect to its argument)."
-    pass
 
 '''
 Now for an extra credit challenge: arrange to describe polynomials with an
@@ -199,8 +211,6 @@ call the function test_poly1().  Make sure that poly objects can still be called
 approach, define a new function, Poly, which takes one argument, a string,
 as in Poly('30 * x**2 + 20 * x + 10').  Call test_poly2().
 '''
-
-
 def test_poly1():
     # I define x as the polynomial 1*x + 0.
     x = poly((0, 1))
