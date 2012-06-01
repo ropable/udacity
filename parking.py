@@ -1,3 +1,69 @@
+from __future__ import division
+import time
+from functools import update_wrapper
+
+def decorator(d):
+    "Make function d a decorator: d wraps a function fn."
+    def _d(fn):
+        return update_wrapper(d(fn), fn)
+    update_wrapper(_d, d)
+    return _d
+
+@decorator
+def trace(f):
+    indent = '   '
+    def _f(*args):
+        signature = '%s(%s)' % (f.__name__, ', '.join(map(repr, args)))
+        print '%s--> %s' % (trace.level*indent, signature)
+        trace.level += 1
+        try:
+            result = f(*args)
+            print '%s<-- %s == %s' % ((trace.level-1)*indent,
+                                      signature, result)
+        finally:
+            trace.level -= 1
+        return result
+    trace.level = 0
+    return _f
+
+@decorator
+def memo(f):
+    '''Decorator that caches the return value for each call to f(args).
+    Then when called again with same args, we can just look it up.'''
+    cache = {}
+    def _f(*args):
+        try:
+            return cache[args]
+        except KeyError:
+            cache[args] = result = f(*args)
+            return result
+        except TypeError:
+            # some element of args refuses to be a dict key
+            return f(args)
+    _f.cache = cache
+    return _f
+    
+def average(numbers):
+    '''Return the average (arithmetic mean) of a sequence of numbers.'''
+    return sum(numbers) / float(len(numbers))
+    
+def timedcall(fn, *args):
+    '''Call function with args; return the time in seconds and results.'''
+    t0 = time.clock()
+    result = fn(*args)
+    t1 = time.clock()
+    return t1-t0, result
+    
+def timedcalls(n, fn, *args):
+    '''Call fn(*args) repeatedly: n times if n is an int, or up to
+    n seconds if n is a float; return the min, avg, and max time.'''
+    if (isinstance(n, int)):
+        times = [timedcall(fn,*args)[0] for _ in range(n)]
+    else:
+        times = []
+        while sum(times) < n:
+            times.append(timedcall(fn,*args)[0])
+    return min(times), average(times), max(times)
 '''
 UNIT 4: Search
 
@@ -79,7 +145,8 @@ We represent a state of the problem with one big tuple of (object, locations)
 pairs, where each pair is a tuple and the locations are a tuple.  Here is the
 initial state for the problem above in this format:
 '''
-
+from copy import copy
+'''
 puzzle1 = (
  ('@', (31,)),
  ('*', (26, 27)), 
@@ -101,7 +168,7 @@ puzzle1 = (
 # and finally '*' moves 4 spaces right to the goal.
 
 # Your task is to define solve_parking_puzzle:
-
+'''
 N = 8
 
 def solve_parking_puzzle(start, N=N):
@@ -110,6 +177,8 @@ def solve_parking_puzzle(start, N=N):
     alternating items; an action is a pair (object, distance_moved),
     such as ('B', 16) to move 'B' two squares down on the N=8 grid.
     '''
+    return shortest_path_search(start, grid_successors, is_goal)
+    
     
 # But it would also be nice to have a simpler format to describe puzzles,
 # and a way to visualize states.
@@ -131,8 +200,81 @@ def grid(cars, N=N):
     tuple of pairs like ('*', (26, 27)). The return result is a big tuple
     of the 'cars' pairs along with the walls and goal pairs.
     '''
-    pass
+    # First, append the goal square.
+    exit = abs(int(N/2))*N-1
+    all_cars = [('@', locs(exit, 1))] # Halfway down the right side.
+    for c in cars:
+        all_cars.append(c)
+    # Finally, append the walls.
+    wall_squares = [i for i in range(N)] # Top row
+    wall_squares += [i for i in range(0, N**2, N)] # Left row
+    wall_squares += [i for i in range(N-1, N**2, N)] # Right row
+    wall_squares += [i for i in range(N**2-N, N**2)] # Bottom row
+    walls = set(wall_squares)
+    walls.remove(exit)
+    all_cars.append(('|', tuple(walls)))
+    return tuple(all_cars)
+    
+def empty_square(state, square):
+    "Return True if the pass-in square is empty, else return False."
+    occupied = []
+    extend = occupied.extend
+    for l in [car[1] for car in state[1:]]:
+        extend(l)
+    if square in occupied: return False
+    return True
 
+@memo
+def grid_successors(state):
+    '''Find all successor grids to this state. Return successors as a dict of
+    state:action pairs. "Action" is a tuple: (car, move)
+    '''
+    successors = {}
+    for car in state:
+        if car[0] not in ('@', '|'):
+            n = car[1][1] - car[1][0] # Equals 1 or N.
+            ahead = copy(n)
+            # First move each car left/up until we bump into something.
+            empty = empty_square(state, car[1][0]-ahead)
+            while empty:
+                # Extend the car's move by one square.
+                new_state = list(state)
+                new_state.remove(car)
+                moved_car = (car[0], tuple([i-ahead for i in car[1]]))
+                new_state.append(moved_car)
+                action = (car[0], -ahead)
+                successors[tuple(new_state)] = action
+                ahead += n
+                empty = empty_square(state, car[1][0]-ahead)
+            # Next move it right/down until we bump into something.
+            ahead = copy(n)
+            empty = empty_square(state, car[1][-1]+ahead)
+            while empty:
+                # Extend the car's move by one square.
+                new_state = list(state)
+                new_state.remove(car)
+                moved_car = (car[0], tuple([i+ahead for i in car[1]]))
+                new_state.append(moved_car)
+                action = (car[0], ahead)
+                successors[tuple(new_state)] = action
+                ahead += n
+                empty = empty_square(state, car[1][-1]+ahead)
+    return successors
+
+@memo
+def is_goal(state):
+    goal_square, car_squares = None, None
+    for c in state:
+        if c[0] == "@":
+            goal_square = c[1][0]
+    for c in state:
+        if c[0] == "*":
+            car_squares = c[1]
+    if goal_square in car_squares:
+        return True
+    else:
+        return False
+    
 def show(state, N=N):
     "Print a representation of a state as an NxN grid."
     # Initialize and fill in the board.
@@ -144,6 +286,7 @@ def show(state, N=N):
     for i,s in enumerate(board):
         print s,
         if i % N == N - 1: print
+    print('')
 
 # Here we see the grid and locs functions in use:
 puzzle1 = grid((
@@ -154,19 +297,7 @@ puzzle1 = grid((
     ('O', locs(41, 2, N)),
     ('B', locs(20, 3, N)),
     ('A', locs(45, 2))))
-'''
-puzzle1 = (
- ('@', (31,)),
- ('*', (26, 27)), 
- ('G', (9, 10)),
- ('Y', (14, 22, 30)), 
- ('P', (17, 25, 33)), 
- ('O', (41, 49)), 
- ('B', (20, 28, 36)), 
- ('A', (45, 46)), 
- ('|', (0, 1, 2, 3, 4, 5, 6, 7, 8, 15, 16, 23, 24, 32, 39,
-        40, 47, 48, 55, 56, 57, 58, 59, 60, 61, 62, 63)))
-'''
+
 puzzle2 = grid((
     ('*', locs(26, 2)),
     ('B', locs(20, 3, N)),
@@ -181,9 +312,19 @@ puzzle3 = grid((
     ('O', locs(45, 2, N)),
     ('Y', locs(49, 3))))
 
+puzzle4 = grid((
+    ('*', locs(41, 2)),
+    ('B', locs(33, 3, 10)),
+    ('C', locs(34, 3, 10)),
+    ('D', locs(35, 3, 10)),
+    ('E', locs(36, 3, 10)),
+    #('F', locs(37, 3, 10)),
+    #('G', locs(38, 3, 10)),
+    ), N=10)
 # Here are the shortest_path_search and path_actions functions from the unit.
 # You may use these if you want, but you don't have to.
 
+@memo
 def shortest_path_search(start, successors, is_goal):
     '''Find the shortest path from start state to a state
     such that is_goal(state) is true.
@@ -208,3 +349,5 @@ def shortest_path_search(start, successors, is_goal):
 def path_actions(path):
     "Return a list of actions in this path."
     return path[1::2]
+    
+path = solve_parking_puzzle(puzzle4)
