@@ -177,7 +177,7 @@ def solve_parking_puzzle(start, N=N):
     alternating items; an action is a pair (object, distance_moved),
     such as ('B', 16) to move 'B' two squares down on the N=8 grid.
     '''
-    return shortest_path_search(start, grid_successors, is_goal)
+    return shortest_path_search(start, grid_successors, is_goal, N)
     
     
 # But it would also be nice to have a simpler format to describe puzzles,
@@ -215,53 +215,53 @@ def grid(cars, N=N):
     all_cars.append(('|', tuple(walls)))
     return tuple(all_cars)
     
-def empty_square(state, square):
-    "Return True if the pass-in square is empty, else return False."
-    occupied = []
-    extend = occupied.extend
-    for l in [car[1] for car in state[1:]]:
-        extend(l)
-    if square in occupied: return False
-    return True
-
-@memo
-def grid_successors(state):
+def grid_successors(state, N=N):
     '''Find all successor grids to this state. Return successors as a dict of
     state:action pairs. "Action" is a tuple: (car, move)
     '''
     successors = {}
+    board = ['.'] * N**2
+    # Construct the board state as a list.
+    for (c, squares) in state:
+        for s in squares:
+            board[s] = c
     for car in state:
+        #if car[0] == 'B':
         if car[0] not in ('@', '|'):
             n = car[1][1] - car[1][0] # Equals 1 or N.
+            # First look left/up direction.
             ahead = copy(n)
             # First move each car left/up until we bump into something.
-            empty = empty_square(state, car[1][0]-ahead)
-            while empty:
+            square = board[car[1][0]-ahead]
+            while square in ('.', '@'):
                 # Extend the car's move by one square.
                 new_state = list(state)
                 new_state.remove(car)
                 moved_car = (car[0], tuple([i-ahead for i in car[1]]))
                 new_state.append(moved_car)
                 action = (car[0], -ahead)
+                #show(new_state)
                 successors[tuple(new_state)] = action
                 ahead += n
-                empty = empty_square(state, car[1][0]-ahead)
+                square = board[car[1][0]-ahead]
+                #print(square)
             # Next move it right/down until we bump into something.
             ahead = copy(n)
-            empty = empty_square(state, car[1][-1]+ahead)
-            while empty:
+            square = board[car[1][-1]+ahead]
+            while square in ('.', '@'):
                 # Extend the car's move by one square.
                 new_state = list(state)
                 new_state.remove(car)
                 moved_car = (car[0], tuple([i+ahead for i in car[1]]))
                 new_state.append(moved_car)
                 action = (car[0], ahead)
+                #show(new_state)
                 successors[tuple(new_state)] = action
                 ahead += n
-                empty = empty_square(state, car[1][-1]+ahead)
+                square = board[car[1][-1]+ahead]
+                #print(square)
     return successors
 
-@memo
 def is_goal(state):
     goal_square, car_squares = None, None
     for c in state:
@@ -296,7 +296,8 @@ puzzle1 = grid((
     ('P', locs(17, 3, N)),
     ('O', locs(41, 2, N)),
     ('B', locs(20, 3, N)),
-    ('A', locs(45, 2))))
+    ('A', locs(45, 2))
+    ))
 
 puzzle2 = grid((
     ('*', locs(26, 2)),
@@ -313,19 +314,18 @@ puzzle3 = grid((
     ('Y', locs(49, 3))))
 
 puzzle4 = grid((
-    ('*', locs(41, 2)),
-    ('B', locs(33, 3, 10)),
-    ('C', locs(34, 3, 10)),
-    ('D', locs(35, 3, 10)),
-    ('E', locs(36, 3, 10)),
-    #('F', locs(37, 3, 10)),
-    #('G', locs(38, 3, 10)),
-    ), N=10)
+    ('*', locs(28, 2)),
+    ('A', locs(21, 3, 9)),
+    ('B', locs(22, 3, 9)),
+    ('C', locs(23, 3, 9)),
+    ('D', locs(24, 3, 9)),
+    ('E', locs(25, 3, 9)),
+    ), N=9)
 # Here are the shortest_path_search and path_actions functions from the unit.
 # You may use these if you want, but you don't have to.
 
 @memo
-def shortest_path_search(start, successors, is_goal):
+def shortest_path_search(start, successors, is_goal, N=N):
     '''Find the shortest path from start state to a state
     such that is_goal(state) is true.
     '''
@@ -336,7 +336,7 @@ def shortest_path_search(start, successors, is_goal):
     while frontier:
         path = frontier.pop(0)
         s = path[-1]
-        for (state, action) in successors(s).items():
+        for (state, action) in successors(s, N).items():
             if state not in explored:
                 explored.add(state)
                 path2 = path + [action, state]
@@ -349,5 +349,5 @@ def shortest_path_search(start, successors, is_goal):
 def path_actions(path):
     "Return a list of actions in this path."
     return path[1::2]
-    
-path = solve_parking_puzzle(puzzle4)
+
+path = solve_parking_puzzle(puzzle4, N=9)
