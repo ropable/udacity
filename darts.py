@@ -55,19 +55,20 @@ DB = 50
 ordered_points = [0] + sorted(set(P+DP+TP+[SB]+[DB]), reverse=True)
 points_map = {}
 for i in P:
+    points_map[i] = 'S{0}'.format(i)
+for i in P:
     points_map[i*3] = 'T{0}'.format(i)
 for i in P:
     points_map[i*2] = 'D{0}'.format(i)
-for i in P:
-    points_map[i] = str(i)
 points_map[SB] = 'SB'
 points_map[DB] = 'DB'
-points_map[0] = 'miss'
+points_map[0] = 'OFF'
 
 def double_out(total):
     '''Return a shortest possible list of targets that add to total,
     where the length <= 3 and the final element is a double.
     If there is no solution, return None.'''
+    if not total: return None
     l = []
     # Dart 1
     for i in ordered_points:
@@ -82,7 +83,7 @@ def double_out(total):
         if sum(i) == total:
             # Remove any zeros
             l.append(filter(lambda a: a!=0, i))
-    # Map the points values to our notation.
+    #return l
     for idx, combo in enumerate(l):
         for i, v in enumerate(combo):
             combo[i] = points_map[combo[i]]
@@ -101,6 +102,8 @@ def test_darts():
     "Test the double_out function."
     assert double_out(170) == ['T20', 'T20', 'DB']
     assert double_out(171) == None
+    assert double_out(0) == None
+    assert double_out(8) == ['D4']
     assert double_out(100) in (['T20', 'D20'], ['DB', 'DB'])
     print('test_darts passes.')
 
@@ -229,10 +232,28 @@ def outcome(target, miss):
     else:
         pd[target] = 1.0
     return pd
-    
+
+points_map_inv = {}
+for i in P:
+    points_map_inv['T{0}'.format(i)] = i*3
+for i in P:
+    points_map_inv['D{0}'.format(i)] = i*2
+for i in P:
+    points_map_inv['S{0}'.format(i)] = i
+points_map_inv['SB'] = SB
+points_map_inv['DB'] = DB
+points_map_inv['OFF'] = 0
+
 def best_target(miss):
     "Return the target that maximizes the expected score."
-    #your code here
+    scores = []
+    for k, v in points_map_inv.iteritems():
+        score = 0
+        out = outcome(k, miss)
+        for key, val in out.iteritems():
+            score += val * points_map_inv[key]
+        scores.append((score, k))
+    return sorted(scores, reverse=True)[0][1]
     
 def same_outcome(dict1, dict2):
     "Two states are the same if all corresponding sets of locs are the same."
@@ -240,9 +261,9 @@ def same_outcome(dict1, dict2):
                for key in set(dict1) | set(dict2))
 
 def test_darts2():
-    #assert best_target(0.0) == 'T20'
-    #assert best_target(0.1) == 'T20'
-    #assert best_target(0.4) == 'T19'
+    assert best_target(0.0) == 'T20'
+    assert best_target(0.1) == 'T20'
+    assert best_target(0.4) == 'T19'
     assert same_outcome(outcome('T20', 0.0), {'T20': 1.0})
     assert same_outcome(outcome('T20', 0.1), 
                         {'T20': 0.81, 'S1': 0.005, 'T5': 0.045, 
@@ -254,5 +275,6 @@ def test_darts2():
              'S19': 0.016, 'S18': 0.016, 'S13': 0.016, 'S12': 0.016, 'S11': 0.016,
              'S10': 0.016, 'S17': 0.016, 'S16': 0.016, 'S15': 0.016, 'S14': 0.016,
              'S7': 0.016, 'SB': 0.64}))
+    print('test_darts2 passes')
 
- #assert sum(outcome('DB', 0.1).values()) == 1
+test_darts2()
