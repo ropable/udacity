@@ -241,7 +241,7 @@ def grid_successors(state, N=N):
                 new_state.append(moved_car)
                 action = (car[0], -ahead)
                 #show(new_state)
-                successors[tuple(new_state)] = action
+                successors[frozenset(new_state)] = action
                 ahead += n
                 square = board[car[1][0]-ahead]
                 #print(square)
@@ -256,7 +256,7 @@ def grid_successors(state, N=N):
                 new_state.append(moved_car)
                 action = (car[0], ahead)
                 #show(new_state)
-                successors[tuple(new_state)] = action
+                successors[frozenset(new_state)] = action
                 ahead += n
                 square = board[car[1][-1]+ahead]
                 #print(square)
@@ -321,6 +321,15 @@ puzzle4 = grid((
     ('D', locs(24, 3, 9)),
     ('E', locs(25, 3, 9)),
     ), N=9)
+    
+puzzle5 = grid((
+    ('*', locs(41, 2)),
+    ('A', locs(33, 3, 10)),
+    ('B', locs(34, 3, 10)),
+    ('C', locs(35, 3, 10)),
+    ('D', locs(36, 3, 10)),
+    ('E', locs(37, 3, 10)),
+    ), N=10)
 # Here are the shortest_path_search and path_actions functions from the unit.
 # You may use these if you want, but you don't have to.
 
@@ -350,4 +359,5 @@ def path_actions(path):
     "Return a list of actions in this path."
     return path[1::2]
 
-path = solve_parking_puzzle(puzzle4, N=9)
+#path = solve_parking_puzzle(puzzle5, N=10)
+#print(path_actions(path))
