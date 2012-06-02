@@ -144,9 +144,7 @@ The wall in the upper left has index 0 and the one in the lower right has 63.
 We represent a state of the problem with one big tuple of (object, locations)
 pairs, where each pair is a tuple and the locations are a tuple.  Here is the
 initial state for the problem above in this format:
-'''
-from copy import copy
-'''
+
 puzzle1 = (
  ('@', (31,)),
  ('*', (26, 27)), 
@@ -178,8 +176,7 @@ def solve_parking_puzzle(start, N=N):
     such as ('B', 16) to move 'B' two squares down on the N=8 grid.
     '''
     return shortest_path_search(start, grid_successors, is_goal, N)
-    
-    
+
 # But it would also be nice to have a simpler format to describe puzzles,
 # and a way to visualize states.
 # You will do that by defining the following two functions:
@@ -225,43 +222,44 @@ def grid_successors(state, N=N):
     for (c, squares) in state:
         for s in squares:
             board[s] = c
-    for car in state:
-        #if car[0] == 'B':
+    for idx, car in enumerate(state):
         if car[0] not in ('@', '|'):
-            n = car[1][1] - car[1][0] # Equals 1 or N.
-            # First look left/up direction.
-            ahead = copy(n)
+            n = ahead = car[1][1] - car[1][0] # Equals 1 or N.
             # First move each car left/up until we bump into something.
             square = board[car[1][0]-ahead]
             while square in ('.', '@'):
                 # Extend the car's move by one square.
-                new_state = list(state)
-                new_state.remove(car)
-                moved_car = (car[0], tuple([i-ahead for i in car[1]]))
-                new_state.append(moved_car)
+                state2 = list(state)
+                state2[idx] = (car[0], tuple([i-ahead for i in car[1]]))
                 action = (car[0], -ahead)
-                #show(new_state)
-                successors[frozenset(new_state)] = action
+                successors[frozenset(state2)] = action
                 ahead += n
                 square = board[car[1][0]-ahead]
                 #print(square)
             # Next move it right/down until we bump into something.
-            ahead = copy(n)
+            ahead = car[1][1] - car[1][0]
             square = board[car[1][-1]+ahead]
             while square in ('.', '@'):
                 # Extend the car's move by one square.
-                new_state = list(state)
-                new_state.remove(car)
-                moved_car = (car[0], tuple([i+ahead for i in car[1]]))
-                new_state.append(moved_car)
+                state2 = list(state)
+                state2[idx] = (car[0], tuple([i+ahead for i in car[1]]))
                 action = (car[0], ahead)
-                #show(new_state)
-                successors[frozenset(new_state)] = action
+                successors[frozenset(state2)] = action
                 ahead += n
                 square = board[car[1][-1]+ahead]
                 #print(square)
     return successors
-
+'''
+puzzle1 = [
+    ('*', (26, 27)), 
+    ('G', (9, 10)),
+    ('Y', (14, 22, 30)), 
+    ('P', (17, 25, 33)), 
+    ('O', (41, 49)), 
+    ('B', (20, 28, 36)), 
+    ('A', (45, 46))
+    ]
+'''
 def is_goal(state):
     goal_square, car_squares = None, None
     for c in state:
@@ -329,6 +327,7 @@ puzzle5 = grid((
     ('C', locs(35, 3, 10)),
     ('D', locs(36, 3, 10)),
     ('E', locs(37, 3, 10)),
+    ('F', locs(38, 3, 10)),
     ), N=10)
 # Here are the shortest_path_search and path_actions functions from the unit.
 # You may use these if you want, but you don't have to.
@@ -359,5 +358,5 @@ def path_actions(path):
     "Return a list of actions in this path."
     return path[1::2]
 
-#path = solve_parking_puzzle(puzzle5, N=10)
-#print(path_actions(path))
+path = solve_parking_puzzle(puzzle5, N=10)
+print(path_actions(path))
