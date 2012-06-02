@@ -358,5 +358,5 @@ def path_actions(path):
     "Return a list of actions in this path."
     return path[1::2]
 
-path = solve_parking_puzzle(puzzle5, N=10)
-print(path_actions(path))
+#path = solve_parking_puzzle(puzzle5, N=10)
+#print(path_actions(path))

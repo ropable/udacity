@@ -1,5 +1,4 @@
 # Unit 5: Probability in the game of Darts
-
 '''
 In the game of darts, players throw darts at a board to score points.
 The circular board has a 'bulls-eye' in the center and 20 slices
@@ -29,12 +28,6 @@ example, for total=100, you can choose ['T20', 'D20'] or ['DB', 'DB']
 but you cannot choose ['T20', 'D10', 'D10'].
 '''
 
-def test_darts():
-    "Test the double_out function."
-    assert double_out(170) == ['T20', 'T20', 'DB']
-    assert double_out(171) == None
-    assert double_out(100) in (['T20', 'D20'], ['DB', 'DB'])
-
 '''
 My strategy: I decided to choose the result that has the highest valued
 target(s) first, e.g. always take T20 on the first dart if we can achieve
@@ -42,7 +35,7 @@ a solution that way.  If not, try T19 first, and so on. At first I thought
 I would need three passes: first try to solve with one dart, then with two,
 then with three.  But I realized that if we include 0 as a possible dart
 value, and always try the 0 first, then we get the effect of having three
-passes, but we only have to code one pass.  So I creted ordered_points as
+passes, but we only have to code one pass.  So I created ordered_points as
 a list of all possible scores that a single dart can achieve, with 0 first,
 and then descending: [0, 60, 57, ..., 1].  I iterate dart1 and dart2 over
 that; then dart3 must be whatever is left over to add up to total.  If
@@ -53,13 +46,64 @@ to get the name of a target that scores d.  When there are several choices,
 we must choose a double for the last dart, but for the others I prefer the
 easiest targets first: 'S' is easiest, then 'T', then 'D'.
 '''
-
+P = [i for i in range(1, 21, 1)]
+DP = [i*2 for i in P]
+TP = [i*3 for i in P]
+SB = 25
+DB = 50
+ordered_points = [0] + sorted(set(P+DP+TP+[SB]+[DB]), reverse=True)
+points_map = {}
+for i in P:
+    points_map[i*3] = 'T{0}'.format(i)
+for i in P:
+    points_map[i*2] = 'D{0}'.format(i)
+for i in P:
+    points_map[i] = str(i)
+points_map[SB] = 'SB'
+points_map[DB] = 'DB'
+points_map[0] = 'miss'
 
 def double_out(total):
     '''Return a shortest possible list of targets that add to total,
     where the length <= 3 and the final element is a double.
     If there is no solution, return None.'''
-    # your code here
+    l = []
+    # Dart 1
+    for i in ordered_points:
+        if i == total: l.append([i])
+    # Darts 1 & 2
+    for i in [[i, j] for i in ordered_points for j in ordered_points]:
+        if sum(i) == total:
+            # Remove any zeros
+            l.append(filter(lambda a: a!=0, i))
+    # Darts 1, 2 & 3
+    for i in [[i, j, k] for i in ordered_points for j in ordered_points for k in ordered_points]:
+        if sum(i) == total:
+            # Remove any zeros
+            l.append(filter(lambda a: a!=0, i))
+    # Map the points values to our notation.
+    for idx, combo in enumerate(l):
+        for i, v in enumerate(combo):
+            combo[i] = points_map[combo[i]]
+        l[idx] = tuple(combo)
+    l = set(l)
+    out = []
+    for v in l:
+        if 'D' in v[-1]: out.append(v)
+    if out:
+        out.sort(key=len)
+        return list(out[0])
+    else:
+        return None
+        
+def test_darts():
+    "Test the double_out function."
+    assert double_out(170) == ['T20', 'T20', 'DB']
+    assert double_out(171) == None
+    assert double_out(100) in (['T20', 'D20'], ['DB', 'DB'])
+    print('test_darts passes.')
+
+test_darts()
 
 '''
 It is easy enough to say "170 points? Easy! Just hit T20, T20, DB."
