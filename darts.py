@@ -1,3 +1,4 @@
+from __future__ import division
 # Unit 5: Probability in the game of Darts
 '''
 In the game of darts, players throw darts at a board to score points.
@@ -104,7 +105,6 @@ def test_darts():
     print('test_darts passes.')
 
 test_darts()
-
 '''
 It is easy enough to say "170 points? Easy! Just hit T20, T20, DB."
 But, at least for me, it is much harder to actually execute the plan
@@ -121,18 +121,21 @@ Here's the model:
 
 First, for ring accuracy.  If you aim for the triple ring, all the
 misses go to a single ring (some to the inner one, some to the outer
-one, but the model doesn't distinguish between these). If you aim for
-the double ring (at the edge of the board), half the misses (e.g. 0.05
+one, but the model doesn't distinguish between these). 
+
+If you aim for the double ring (at the edge of the board), half the misses (e.g. 0.05
 if miss=0.1) go to the single ring, and half off the board. (We will
-agree to call the off-the-board 'target' by the name 'OFF'.) If you
-aim for a thick single ring, it is about 5 times thicker than the thin
+agree to call the off-the-board 'target' by the name 'OFF'.) 
+
+If you aim for a thick single ring, it is about 5 times thicker than the thin
 rings, so your miss ratio is reduced to 1/5th, and of these, half go to
 the double ring and half to the triple.  So with miss=0.1, 0.01 will go
-to each of the double and triple ring.  Finally, for the bulls-eyes. If
-you aim for the single bull, 1/4 of your misses go to the double bull and
-3/4 to the single ring.  If you aim for the double bull, it is tiny, so
-your miss rate is tripled; of that, 2/3 goes to the single ring and 1/3
-to the single bull ring.
+to each of the double and triple ring.
+
+Finally, for the bulls-eyes. If you aim for the single bull, 1/4 of your 
+misses go to the double bull and 3/4 to the single ring.  
+If you aim for the double bull, it is tiny, so your miss rate is tripled;
+of that, 2/3 goes to the single ring and 1/3 to the single bull ring.
 
 Now, for section accuracy.  Half your miss rate goes one section clockwise
 and half one section counter-clockwise from your target. The clockwise 
@@ -162,12 +165,71 @@ than Pig for several reasons: there are many outcomes, so the search space
 is large; also, it is always possible to miss a double, and thus there is
 no guarantee that the game will end in a finite number of moves.
 '''
-
+ORDER = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5]
+def neighbors(n):
+    "Return the two neighbour sections of the pass"
+    i = ORDER.index(n)
+    if i == 0:
+        return ORDER[-1], ORDER[1]
+    elif i == 19:
+        return ORDER[18], ORDER[0]
+    else:
+        return ORDER[i-1], ORDER[i+1]
 
 def outcome(target, miss):
     "Return a probability distribution of [(target, probability)] pairs."
-    #your code here
-
+    #pd = {target: 1.-miss}
+    pd = {}
+    # Double bullseye.
+    if target == 'DB' and miss > 0:
+        # If you aim for the double bull, it is tiny, so your miss rate is tripled;
+        # of that, 2/3 goes to the single ring and 1/3 to the single bull ring.
+        # INSTEAD: your 'hit' rate is reduced to the third, and the difference assigned
+        # to the miss rate.
+        # E.g. a miss rate of 0.6 = 0.6 + (0.4 * 2/3) = 0.87
+        # hit rate = 0.4 * 1/3 = 0.13
+        miss = miss + ((1 - miss) * 2/3)
+        pd['DB'] = 1 - miss
+        # 1/3 of miss geos to SB
+        pd['SB'] = miss * 1/3
+        # 2/3 of miss goes to single ring, distributed evenly.
+        for i in range(1, 21, 1):
+            pd['S{0}'.format(i)] = (miss * 2/3) / 20
+    # Single bullseye.
+    elif target == 'SB' and miss > 0:
+        # If you aim for the single bull, 1/4 of your 
+        # misses go to the double bull and 3/4 to the single ring.  
+        pd['SB'] = (1 - miss)**2
+        pd['DB'] = (1 - miss) * (miss * 1/4)
+        remain = 1 - sum(pd.values())
+        for i in range(1, 21, 1):
+            pd['S{0}'.format(i)] = remain / 20
+    # Triple ring
+    # If you aim for the triple ring, all the misses go to a single ring.
+    elif target[0] == 'T' and miss > 0:
+        pd[target] = (1 - miss)**2
+        pd['S{0}'.format(target[1:])] = 2 * ((1 - miss) * (miss / 2))
+        neighbours = neighbors(int(target[1:]))
+        for n in neighbours:
+            pd['T{0}'.format(n)] = (1 - miss) * (miss / 2)
+            pd['S{0}'.format(n)] = 2 * (miss / 2)**2
+    # Double ring
+    #If you aim for the double ring (at the edge of the board), half the misses (e.g. 0.05
+    #if miss=0.1) go to the single ring, and half off the board. (We will
+    #agree to call the off-the-board 'target' by the name 'OFF'.
+    elif target[0] == 'D' and miss > 0:
+        pd[target] = (1 - miss)**2
+        pd['S{0}'.format(target[1:])] = (1 - miss) * (miss / 2)
+        pd['OFF'] = ( 2 * (miss / 2)**2) + (1 - miss) * (miss / 2)
+        neighbours = neighbors(int(target[1:]))
+        for n in neighbours:
+            pd['D{0}'.format(n)] = (1 - miss) * (miss / 2)
+            pd['S{0}'.format(n)] = (miss / 2)**2
+    # Perfect aim!
+    else:
+        pd[target] = 1.0
+    return pd
+    
 def best_target(miss):
     "Return the target that maximizes the expected score."
     #your code here
@@ -178,9 +240,9 @@ def same_outcome(dict1, dict2):
                for key in set(dict1) | set(dict2))
 
 def test_darts2():
-    assert best_target(0.0) == 'T20'
-    assert best_target(0.1) == 'T20'
-    assert best_target(0.4) == 'T19'
+    #assert best_target(0.0) == 'T20'
+    #assert best_target(0.1) == 'T20'
+    #assert best_target(0.4) == 'T19'
     assert same_outcome(outcome('T20', 0.0), {'T20': 1.0})
     assert same_outcome(outcome('T20', 0.1), 
                         {'T20': 0.81, 'S1': 0.005, 'T5': 0.045, 
@@ -192,3 +254,5 @@ def test_darts2():
              'S19': 0.016, 'S18': 0.016, 'S13': 0.016, 'S12': 0.016, 'S11': 0.016,
              'S10': 0.016, 'S17': 0.016, 'S16': 0.016, 'S15': 0.016, 'S14': 0.016,
              'S7': 0.016, 'SB': 0.64}))
+
+ #assert sum(outcome('DB', 0.1).values()) == 1
