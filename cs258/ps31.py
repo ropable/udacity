@@ -116,7 +116,6 @@ def parse_subgrids(grid):
     if not parse_unit(s1) or not parse_unit(s2) or not parse_unit(s3): return False
     return True
 
-
 def check_sudoku(grid):
     if not parse_grid(grid): return None
     if not parse_rows(grid): return False
@@ -124,6 +123,7 @@ def check_sudoku(grid):
     if not parse_subgrids(grid): return False
     return True
 
+'''
 print check_sudoku(ill_formed) # --> None
 print check_sudoku(valid)      # --> True
 print check_sudoku(invalid)    # --> False
@@ -137,3 +137,4 @@ print check_sudoku([0] * 9)
 print check_sudoku([[]] * 9)
 print check_sudoku([[str(a) for a in b] for b in valid])
 print check_sudoku([[max(0.0, float(a) - 0.5) for a in b] for b in valid])
+'''
