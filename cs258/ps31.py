@@ -129,3 +129,11 @@ print check_sudoku(valid)      # --> True
 print check_sudoku(invalid)    # --> False
 print check_sudoku(easy)       # --> True
 print check_sudoku(hard)       # --> True
+# Everything after here should return None.
+print check_sudoku(None)
+print check_sudoku([])
+print check_sudoku([0])
+print check_sudoku([0] * 9)
+print check_sudoku([[]] * 9)
+print check_sudoku([[str(a) for a in b] for b in valid])
+print check_sudoku([[max(0.0, float(a) - 0.5) for a in b] for b in valid])
