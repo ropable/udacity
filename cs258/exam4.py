@@ -1,27 +1,4 @@
-# Code Coverage
-# ---------------
-# Achieve full statement coverage and parameter value coverage for
-# strings, integers, and booleans on this enhanced Queue class.
-#
-# You will need to:
-# 1) Write your test code in the test function.
-# 2) Press submit. The grader will tell you if you
-#    fail to cover any specific part of the code.
-# 3) Update your test function until you cover the
-#    entire code base.
-
-# This specific Queue class can enqueue not only integers,
-# but strings and booleans as well. You will need to provide
-# parameter value coverage for these data types by adding
-# each type of data into your Queue.
-#
-# Furthermore, this Queue class has the additional methods
-# clear() and enqueueall(). The enqueueall method takes
-# in a list or tuple and enqueues each item of the collection
-# individually, returning True if all enqueues succeed, and
-# False if the number of items in the collection will overfill
-# the Queue.
-
+#/usr/bin/env python
 
 # Enhanced Queue class
 class Queue:
@@ -118,9 +95,9 @@ def test():
     # Queue 2
     q = Queue(2)
     q.checkRep()
-    q.enqueue(1)
+    q.enqueue('foo')
     q.checkRep()
-    q.enqueue(1)
+    q.enqueue(True)
     q.checkRep()
     q.dequeue()
     q.checkRep()
