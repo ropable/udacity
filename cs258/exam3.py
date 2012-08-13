@@ -1,23 +1,4 @@
-# Regression Testing
-# ------------------
-# The goal of this problem is for you to write a regression tester
-# for the Queue class.
-#
-# Begin by finding and fixing all of the bugs in the Queue class. Next,
-# define the function regression_test to take in a list of enqueue inputs
-# and dequeue indicators (the returned list of the previous problem) and
-# repeat those method calls using the fixed Queue.
-#
-# That is, after fixing the Queue class, create a new Queue instance,
-# and call the method corresponding to the indicator in the list
-# for each item in the list:
-#
-# Call the enqueue function whenever you come across an integer, using that
-#     integer as the argument.
-# Call the dequeue function whenever you come across the 'dq' indicator.
-
 import array
-import random
 
 
 class Queue:
@@ -37,7 +18,8 @@ class Queue:
         return self.size == self.max
 
     def enqueue(self, x):
-        x = x % 1000
+        if self.size == self.max:
+            return False
         self.data[self.tail] = x
         self.size += 1
         self.tail += 1
@@ -46,6 +28,8 @@ class Queue:
         return True
 
     def dequeue(self):
+        if self.size == 0:
+            return None
         x = self.data[self.head]
         self.size -= 1
         self.head += 1
@@ -90,5 +74,11 @@ inpts = [(574, 0), ('dq', 0), (991, 0), ('dq', 0), ('dq', 1),
 
 
 # Write a regression tester for the Queue class
-def regression_test():
-    pass
+def regression_test(inputs):
+    q = Queue(len(inputs))
+    for i in inputs:
+        if i[0] == 'dq':
+            q.dequeue()
+        else:
+            q.enqueue(i[0])
+        q.checkRep()

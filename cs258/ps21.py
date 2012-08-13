@@ -1,7 +1,8 @@
 import array
 
+
 class Queue:
-    def __init__(self,size_max):
+    def __init__(self, size_max):
         assert size_max > 0
         self.max = size_max
         self.head = 0
@@ -15,7 +16,7 @@ class Queue:
     def full(self):
         return self.size == self.max
 
-    def enqueue(self,x):
+    def enqueue(self, x):
         if self.size == self.max:
             return False
         self.data[self.tail] = x
@@ -41,11 +42,12 @@ class Queue:
         assert self.head >= 0
         assert self.head < self.max
         if self.tail > self.head:
-            assert (self.tail-self.head) == self.size
+            assert (self.tail - self.head) == self.size
         if self.tail < self.head:
-            assert (self.head-self.tail) == (self.max-self.size)
+            assert (self.head - self.tail) == (self.max - self.size)
         if self.head == self.tail:
-            assert (self.size==0) or (self.size==self.max)
+            assert (self.size == 0) or (self.size == self.max)
+
 
 def test():
     q = Queue(1)
