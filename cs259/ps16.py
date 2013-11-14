@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 # Simple debugger
-# See instructions around line 34
+# See instructions around line 35
+
 import sys
-#import readline
+import readline
 
-
+# Our buggy program
 def remove_html_markup(s):
-    # Our buggy program
-    tag = False
+    tag   = False
     quote = False
-    out = ""
+    out   = ""
 
     for c in s:
         if c == '<' and not quote:
@@ -22,9 +22,8 @@ def remove_html_markup(s):
             out = out + c
     return out
 
-
+# main program that runs the buggy program
 def main():
-    # main program that runs the buggy program
     print remove_html_markup('xyz')
     print remove_html_markup('"<b>foo</b>"')
     print remove_html_markup("'<b>foo</b>'")
@@ -33,19 +32,14 @@ def main():
 breakpoints = {9: True}
 stepping = False
 
-""" *** INSTRUCTIONS ***
-Improve and expand this function to accept
-a print command 'p <arg>'.
-If the print command has no argument,
-print out the dictionary that holds all variables.
-Print the value of the supplied variable
-in a form 'var = repr(value)', if
-the 'p' is followed by an argument,
-or print 'No such variable:', arg
-if no such variable exists.
 """
-
-
+Our debug function
+Improve and expand this function to accept
+a breakpoint command 'b <line>'.
+Add the line number to the breakpoints dictionary
+or print 'You must supply a line number'
+if 'b' is not followed by a line number.
+"""
 def debug(command, my_locals):
     global stepping
     global breakpoints
@@ -68,6 +62,14 @@ def debug(command, my_locals):
             print('No such variable: {0}'.format(arg))
         else:
             print(repr(my_locals))
+    elif command.startswith('b'):    # breakpoint
+        if arg:
+            try:
+                breakpoints[int(arg)] = True
+            except ValueError:
+                print('You must supply a line number')
+        else:
+            print('You must supply a line number')
     elif command.startswith('q'):   # quit
         sys.exit(0)
     else:
@@ -75,8 +77,7 @@ def debug(command, my_locals):
 
     return False
 
-commands = ["p", "s", "p tag", "p foo", "q"]
-
+commands = ["b 5", "c", "c", "q"]
 
 def input_command():
     #command = raw_input("(my-spyder) ")
@@ -84,12 +85,11 @@ def input_command():
     command = commands.pop(0)
     return command
 
-
 def traceit(frame, event, trace_arg):
     global stepping
 
     if event == 'line':
-        if stepping or 'frame.f_lineno' in breakpoints:
+        if stepping or breakpoints.has_key(frame.f_lineno):
             resume = False
             while not resume:
                 print event, frame.f_lineno, frame.f_code.co_name, frame.f_locals
@@ -101,3 +101,10 @@ def traceit(frame, event, trace_arg):
 sys.settrace(traceit)
 main()
 sys.settrace(None)
+
+#Simple test
+print breakpoints
+debug("b 5", {'quote': False, 's': 'xyz', 'tag': False, 'c': 'b', 'out': ''})
+print breakpoints
+print breakpoints == {9: True, 5: True}
+#>>> True
