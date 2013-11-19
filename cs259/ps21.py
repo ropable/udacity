@@ -60,7 +60,14 @@ class Invariants:
             # is kept in the 'arg' argument to this function.
             # Use it to keep track of variable "ret" (return)
             for k, v in frame.f_locals.iteritems():
-                if frame.f_code.co_name in self.vars:  # calling function exists.
+                if not frame.f_code.co_name in self.vars:  # calling function exists.
+                    self.vars[frame.f_code.co_name] = {}
+                if not event in self.vars[frame.f_code.co_name]:
+                    self.vars[frame.f_code.co_name][event] = {}
+                if not k in self.vars[frame.f_code.co_name][event]:
+                    self.vars[frame.f_code.co_name][event][k] = Range()
+                self.vars[frame.f_code.co_name][event][k].track(v)
+                '''
                     print('calling function exists!')
                     if event in self.vars[frame.f_code.co_name]:
                         print('event exists!')
@@ -83,6 +90,7 @@ class Invariants:
                     self.vars[frame.f_code.co_name] = {event: {k: Range()}}
                     self.vars[frame.f_code.co_name][event][k].track(v)
                     #self.vars[frame.f_code.co_name][event][k].track(v)
+                '''
                 #self.vars[frame.f_code.co_name][event][k]
             #print(frame.f_code.co_name)
             #print(event)
