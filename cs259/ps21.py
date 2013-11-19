@@ -29,15 +29,11 @@ class Range:
     # Invoke this for every value
     def track(self, value):
         # Set initial min/max values.
-        print(value)
         if not self.min and not self.max:
-            print('init')
             self.min, self.max = value, value
         if value < self.min:
-            print('less than')
             self.min = value
         if value > self.max:
-            print('more than')
             self.max = value
 
     def __repr__(self):
@@ -54,39 +50,21 @@ class Invariants:
 
     def track(self, frame, event, arg):
         if event == "call" or event == "return":
-            # YOUR CODE HERE.
-            # MAKE SURE TO TRACK ALL VARIABLES AND THEIR VALUES
             # If the event is "return", the return value
             # is kept in the 'arg' argument to this function.
             # Use it to keep track of variable "ret" (return)
             for k, v in frame.f_locals.iteritems():
-                if frame.f_code.co_name in self.vars:  # calling function exists.
-                    print('calling function exists!')
-                    if event in self.vars[frame.f_code.co_name]:
-                        print('event exists!')
-                        if k in self.vars[frame.f_code.co_name][event]:
-                            print('variable exists!')
-                            self.vars[frame.f_code.co_name][event][k].track(v)
-                            print(self.vars[frame.f_code.co_name][event][k])
-                        else:
-                            print('instantiate the variable!')
-                            self.vars[frame.f_code.co_name][event][k] = Range()
-                            self.vars[frame.f_code.co_name][event][k].track(v)
-                            print(self.vars[frame.f_code.co_name][event][k])
-                        print(self.vars[frame.f_code.co_name][event])
-                    else:
-                        print('instantiate the event!')
-                        self.vars[frame.f_code.co_name][event] = {k: Range()}
-                        print(self.vars[frame.f_code.co_name][event])
-                else:  # Instantiate the calling function in var.
-                    print('instantiate the calling function!')
-                    self.vars[frame.f_code.co_name] = {event: {k: Range()}}
-                    self.vars[frame.f_code.co_name][event][k].track(v)
-                    #self.vars[frame.f_code.co_name][event][k].track(v)
-                #self.vars[frame.f_code.co_name][event][k]
-            #print(frame.f_code.co_name)
-            #print(event)
-            #print(arg)
+                if not frame.f_code.co_name in self.vars:
+                    self.vars[frame.f_code.co_name] = {}
+                if not event in self.vars[frame.f_code.co_name]:
+                    self.vars[frame.f_code.co_name][event] = {}
+                if not k in self.vars[frame.f_code.co_name][event]:
+                    self.vars[frame.f_code.co_name][event][k] = Range()
+                if event == 'return':
+                    if not 'ret' in self.vars[frame.f_code.co_name][event]:
+                        self.vars[frame.f_code.co_name][event]['ret'] = Range()
+                    self.vars[frame.f_code.co_name][event]['ret'].track(arg)
+                self.vars[frame.f_code.co_name][event][k].track(v)
 
     def __repr__(self):
         # Return the tracked invariants
@@ -115,7 +93,7 @@ def traceit(frame, event, arg):
 sys.settrace(traceit)
 # Tester. Increase the range for more precise results when running locally
 eps = 0.000001
-for i in range(1, 2):
+for i in range(1, 10):
     r = int(random.random() * 1000) # An integer value between 0 and 999.99
     z = square_root(r, eps)
     z = square(z)
