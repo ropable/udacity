@@ -27,7 +27,7 @@ def trace(f):
     return _f
 
 @decorator
-def memo(f):
+def memoize(f):
     '''Decorator that caches the return value for each call to f(args).
     Then when called again with same args, we can just look it up.'''
     cache = {}
@@ -46,14 +46,14 @@ def memo(f):
 def average(numbers):
     '''Return the average (arithmetic mean) of a sequence of numbers.'''
     return sum(numbers) / float(len(numbers))
-    
+
 def timedcall(fn, *args):
     '''Call function with args; return the time in seconds and results.'''
     t0 = time.clock()
     result = fn(*args)
     t1 = time.clock()
     return t1-t0, result
-    
+
 def timedcalls(n, fn, *args):
     '''Call fn(*args) repeatedly: n times if n is an int, or up to
     n seconds if n is a float; return the min, avg, and max time.'''
