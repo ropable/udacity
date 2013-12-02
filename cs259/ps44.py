@@ -22,10 +22,9 @@ def remove_html_markup(s):
 
     return out
 
-
 # The delta debugger
 def ddmin(s):
-    assert test(s) == "FAIL"
+    #assert test(s) == "FAIL"
 
     n = 2     # Initial granularity
     while len(s) >= 2:
@@ -51,7 +50,6 @@ def ddmin(s):
 
     return s
 
-
 # We use these variables to communicate between callbacks and drivers
 the_line      = None
 the_iteration = None
@@ -64,20 +62,15 @@ def trace_fetch_state(frame, event, arg):
     global the_line
     global the_iteration
     global the_state
-    import linecache
 
-    line = linecache.getline(frame.f_code.co_filename, frame.f_lineno).strip()
-    if line[0:3] == 'for':  # An iteration starts here.
+    # If we've arrived at the_line and the req'd no of iterations,
+    # copy the frame.f_locals into global variable the_state.
+    if event == "line" and frame.f_lineno == the_line:
         the_iteration -= 1
 
-    #print the_line
-    #print the_iteration
-    if event == "line" and frame.f_lineno == the_line:# and the_iteration == 0:
+    if event == "line" and frame.f_lineno == the_line and the_iteration == 0:
         the_state = copy.deepcopy(frame.f_locals)
-    #print the_state
-
     return trace_fetch_state
-
 
 # Get the state at LINE/ITERATION
 def get_state(input, line, iteration):
@@ -85,7 +78,7 @@ def get_state(input, line, iteration):
     global the_iteration
     global the_state
 
-    the_line = line
+    the_line      = line
     the_iteration = iteration
 
     sys.settrace(trace_fetch_state)
@@ -94,12 +87,20 @@ def get_state(input, line, iteration):
 
     return the_state
 
-
+# FILL IN FROM YOUR SOLUTION IN THE PREVIOUS EXERCISE
 def trace_apply_diff(frame, event, arg):
+    global the_line
+    global the_iteration
     global the_diff
-    frame.f_locals.update(the_diff)
-    return trace_apply_diff
 
+    # If we've arrived at the_line and the req'd no of iterations,
+    # copy the frame.f_locals into global variable the_state.
+    if event == "line" and frame.f_lineno == the_line:
+        the_iteration -= 1
+
+    if event == "line" and frame.f_lineno == the_line and the_iteration == 0:
+        frame.f_locals.update(the_diff)
+    return trace_apply_diff
 
 # Testing function: Call remove_html_output, stop at THE_LINE/THE_ITERATION,
 # and apply the diffs in DIFFS at THE_LINE
@@ -109,7 +110,7 @@ def test(diffs):
     global the_line
     global the_iteration
 
-    line = the_line
+    line      = the_line
     iteration = the_iteration
 
     the_diff = diffs
@@ -117,7 +118,7 @@ def test(diffs):
     y = remove_html_markup(the_input)
     sys.settrace(None)
 
-    the_line = line
+    the_line      = line
     the_iteration = iteration
 
     if y.find('<') == -1:
@@ -127,16 +128,15 @@ def test(diffs):
 
 html_fail = '"<b>foo</b>"'
 html_pass = "'<b>foo</b>'"
-locations = [(8, 1), (14, 1)]#, (14, 2), (14, 3), (23, 1)]
 
+locations = [(8, 1), (14, 1), (14, 2), (14, 3), (23, 1)]
 
 def auto_cause_chain(locations):
-    global html_fail, html_pass, the_state, the_input, the_line, the_iteration, the_diff
+    global html_fail, html_pass, the_input, the_line, the_iteration, the_diff
     print "The program was started with", repr(html_fail)
 
-    state_pass = {}
-    state_fail = {}
     for (line, iteration) in locations:
+
         # IMPLEMENT THIS !!!
         # Put the state of variables at the line and iteration
         # for the passing and the failing runs in the following variables.
@@ -145,23 +145,18 @@ def auto_cause_chain(locations):
         # to achieve that.
         state_pass = get_state(html_pass, line, iteration)
         state_fail = get_state(html_fail, line, iteration)
-        #print(state_pass)
-        #print(state_fail)
 
         # Compute the differences between the passing and failing runs.
         diffs = []
         for var in state_fail.keys():
-            if not var in state_pass or state_pass[var] != state_fail[var]:
+            if not state_pass.has_key(var) or state_pass[var] != state_fail[var]:
                 diffs.append((var, state_fail[var]))
-        print diffs
 
         # Minimizing the failure-inducing set of differences
         the_input = html_pass
-        the_line = line
-        the_iteration = iteration
-        # THIS IS FAILING - ddmin is returning a different minimum failure state.
+        the_line  = line
+        the_iteration  = iteration
         cause = ddmin(diffs)
-        print cause
 
         # Pretty output
         print "Then, in Line " + repr(line) + " (iteration " + repr(iteration) + "),",
