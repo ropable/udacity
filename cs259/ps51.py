@@ -175,35 +175,37 @@ def mystery(magic):
 
     l, s, n = magic
 
+    tmp = []
     sys.settrace(traceit)
     r1 = f1(l)
     sys.settrace(None)
-    returns.append((func_name, return_arg))
-    #print 'CALLED FUNCTION: {0}'.format(func_name)
-    #print 'RETURN ARG: {0}'.format(return_arg)
+    tmp.append([func_name, return_arg])
 
     sys.settrace(traceit)
     r2 = f2(s)
     sys.settrace(None)
-    returns.append((func_name, return_arg))
-    #print 'CALLED FUNCTION: {0}'.format(func_name)
-    #print 'RETURN ARG: {0}'.format(return_arg)
+    tmp.append([func_name, return_arg])
 
     sys.settrace(traceit)
     r3 = f3(n)
     sys.settrace(None)
-    returns.append((func_name, return_arg))
-    #print 'CALLED FUNCTION: {0}'.format(func_name)
-    #print 'RETURN ARG: {0}'.format(return_arg)
+    tmp.append([func_name, return_arg])
 
     if -1 in [r1, r2, r3]:
-        return "FAIL"
+        i = "FAIL"
     elif r3 < 0:
-        return "FAIL"
+        i = "FAIL"
     elif not r1 or not r2:
-        return "FAIL"
+        i = "FAIL"
     else:
-        return "PASS"
+        i = "PASS"
+
+    for t in tmp:
+        t.append(i)
+        returns.append(tuple(t))
+    # Now we have a list of tuples: (function, return, PASS/FAIL)
+
+    return i
 
 
 # These are the input values you should test the mystery function with
@@ -247,39 +249,139 @@ def f3(mn):
 for i in inputs:
     mystery(i)
 
-# Each list counts bins in this order: 1, 0, -1
-bins = [ [0, 0, 0],
-         [0, 0, 0],
-         [0, 0, 0] ]
+
+#{'n11': 0, 'n10': 0, 'n01': 0, 'n00': 0}
+d = {
+    'f1': {
+        'pos': [0, 0, 0, 0],
+        'zero': [0, 0, 0, 0],
+        'neg': [0, 0, 0, 0]
+    },
+    'f2': {
+        'pos': [0, 0, 0, 0],
+        'zero': [0, 0, 0, 0],
+        'neg': [0, 0, 0, 0]
+    },
+    'f3': {
+        'pos': [0, 0, 0, 0],
+        'zero': [0, 0, 0, 0],
+        'neg': [0, 0, 0, 0]
+    },
+}
 
 for i in returns:
-    if i[0] == 'f1':
-        if i[1] > 0:
-            bins[0][0] = bins[0][0] + 1
-        elif i[1] == 0:
-            bins[0][1] = bins[0][1] + 1
-        else:
-            bins[0][2] = bins[0][2] + 1
-    if i[0] == 'f2':
-        if i[1] > 0:
-            bins[1][0] = bins[1][0] + 1
-        elif i[1] == 0:
-            bins[1][1] = bins[1][1] + 1
-        else:
-            bins[1][2] = bins[1][2] + 1
-    else:
-        if i[1] > 0:
-            bins[2][0] = bins[2][0] + 1
-        elif i[1] == 0:
-            bins[2][1] = bins[2][1] + 1
-        else:
-            bins[2][2] = bins[2][2] + 1
+    if i[0] == 'f1':  # f1
+        if i[1] > 0:  # Positive
+            if i[2] == 'PASS':
+                d['f1']['pos'][0] += 1
+            else:
+                d['f1']['pos'][1] += 1
+        else:  # Zero or negative.
+            if i[2] == 'PASS':
+                d['f1']['pos'][2] += 1
+            else:
+                d['f1']['pos'][3] += 1
+        if i[1] == 0:  # Zero
+            if i[2] == 'PASS':
+                d['f1']['zero'][0] += 1
+            else:
+                d['f1']['zero'][1] += 1
+        else:  # Positive or negative.
+            if i[2] == 'PASS':
+                d['f1']['zero'][2] += 1
+            else:
+                d['f1']['zero'][3] += 1
+        if i[1] < 0:  # negative
+            if i[2] == 'PASS':
+                d['f1']['neg'][0] += 1
+            else:
+                d['f1']['neg'][1] += 1
+        else:  # Positive or negative.
+            if i[2] == 'PASS':
+                d['f1']['neg'][2] += 1
+            else:
+                d['f1']['neg'][3] += 1
+    if i[0] == 'f2':  # f2
+        if i[1] > 0:  # Positive
+            if i[2] == 'PASS':
+                d['f2']['pos'][0] += 1
+            else:
+                d['f2']['pos'][1] += 1
+        else:  # Zero or negative.
+            if i[2] == 'PASS':
+                d['f2']['pos'][2] += 1
+            else:
+                d['f2']['pos'][3] += 1
+        if i[1] == 0:  # Zero
+            if i[2] == 'PASS':
+                d['f2']['zero'][0] += 1
+            else:
+                d['f2']['zero'][1] += 1
+        else:  # Positive or negative.
+            if i[2] == 'PASS':
+                d['f2']['zero'][2] += 1
+            else:
+                d['f2']['zero'][3] += 1
+        if i[1] < 0:  # negative
+            if i[2] == 'PASS':
+                d['f2']['neg'][0] += 1
+            else:
+                d['f2']['neg'][1] += 1
+        else:  # Positive or negative.
+            if i[2] == 'PASS':
+                d['f2']['neg'][2] += 1
+            else:
+                d['f2']['neg'][3] += 1
+    if i[0] == 'f3':  # f3
+        if i[1] > 0:  # Positive
+            if i[2] == 'PASS':
+                d['f3']['pos'][0] += 1
+            else:
+                d['f3']['pos'][1] += 1
+        else:  # Zero or negative.
+            if i[2] == 'PASS':
+                d['f3']['pos'][2] += 1
+            else:
+                d['f3']['pos'][3] += 1
+        if i[1] == 0:  # Zero
+            if i[2] == 'PASS':
+                d['f3']['zero'][0] += 1
+            else:
+                d['f3']['zero'][1] += 1
+        else:  # Positive or negative.
+            if i[2] == 'PASS':
+                d['f3']['zero'][2] += 1
+            else:
+                d['f3']['zero'][3] += 1
+        if i[1] < 0:  # negative
+            if i[2] == 'PASS':
+                d['f3']['neg'][0] += 1
+            else:
+                d['f3']['neg'][1] += 1
+        else:  # Positive or negative.
+            if i[2] == 'PASS':
+                d['f3']['neg'][2] += 1
+            else:
+                d['f3']['neg'][3] += 1
 
-print bins
-print "fn   1   0   -1"
-print "f1   {0}   {1}   {2}".format(bins[0][0], bins[0][1], bins[0][2])
-print "f2   {0}   {1}   {2}".format(bins[1][0], bins[1][1], bins[1][2])
-print "f3   {0}   {1}   {2}".format(bins[2][0], bins[2][1], bins[2][2])
+
 answer_function = "X"   # One of f1, f2, f3
 answer_bin = 42         # One of 1, 0, -1
-answer_value = 1.0000   # precision to 4 decimal places.
+answer_value = 0   # precision to 4 decimal places.
+
+for func, tables in d.iteritems():
+    for group, values in tables.iteritems():
+        try:
+            phi_val = round(phi(*values), 4)
+        except:
+            phi_val = None
+        #print('{0}: {1} phi={2}'.format(func, group, phi_val))
+
+        if phi_val and phi_val > answer_value:
+            answer_value = phi_val
+            answer_function = func
+            answer_bin = group
+
+print answer_function
+print answer_bin
+print answer_value
