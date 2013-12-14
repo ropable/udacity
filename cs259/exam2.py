@@ -4,11 +4,12 @@
 import sys
 #import readline
 
-# Our buggy program
+
 def remove_html_markup(s):
-    tag   = False
+    # Our buggy program
+    tag = False
     quote = False
-    out   = ""
+    out = ""
 
     for c in s:
         if c == '<' and not quote:
@@ -21,8 +22,9 @@ def remove_html_markup(s):
             out = out + c
     return out
 
-# main program that runs the buggy program
+
 def main():
+    # main program that runs the buggy program
     print remove_html_markup('"<b>foo</b>"')
 
 # globals
@@ -31,10 +33,11 @@ watchpoints = {"quote": True}
 watch_values = {}
 stepping = True
 
-"""
-Our debug function
-"""
+
 def debug(command, my_locals):
+    """
+    Our debug function
+    """
     global stepping
     global breakpoints
     global watchpoints
@@ -50,28 +53,28 @@ def debug(command, my_locals):
     else:
         arg = None
 
-    if command.startswith('s'):     # step
+    if command.startswith('s'):  # step
         stepping = True
         return True
-    elif command.startswith('c'):   # continue
+    elif command.startswith('c'):  # continue
         stepping = False
         return True
-    elif command.startswith('p'):    # print
+    elif command.startswith('p'):  # print
         if arg and arg in my_locals:
             print('{0} = {1}'.format(arg, repr(my_locals[arg])))
         elif arg and arg not in my_locals:
             print('No such variable: {0}'.format(arg))
         else:
             print(repr(my_locals))
-    elif command.startswith('b'):    # breakpoint
+    elif command.startswith('b'):  # breakpoint
         if arg:
             try:
-                breakpoints[int(arg)] = True
+                breakpoints[int(arg)] = True  # Try to cast arg as as integer.
             except ValueError:
                 print('You must supply a line number')
         else:
             print('You must supply a line number')
-    elif command.startswith('w'):    # watch variable
+    elif command.startswith('w'):  # watch
         if arg:
             watchpoints[arg] = True
         else:
@@ -82,7 +85,7 @@ def debug(command, my_locals):
                 arg = int(arg)
             except ValueError:
                 print('You must supply a line number')
-            if not isinstance(arg, int):  # Test for mismatch
+            if not isinstance(arg, int):  # Mismatch
                 print "Incorrect command"
             if arg in breakpoints:
                 breakpoints.pop(arg)
@@ -101,31 +104,18 @@ def debug(command, my_locals):
         sys.exit(0)
     else:
         print "No such command", repr(command)
-    '''
-    # Check if watched variables have changed, or need to be initialised.
-    for k, v in my_locals.iteritems():
-        print "foo"
-        print k, v
-        if k in watchpoints and watchpoints[k]:  # Watched variable.
-            if k in watch_values and v != watch_values[k]:  # Initialised, changed.
-                #c : '"' => '<'
-                print("{0} : {1} => {2}".format(k, watch_values[k], my_locals[k]))
-                watch_values[k] = my_locals[k]
-            elif k not in watch_values:  # Needs to be initialised.
-                #c : Initialized => '"'
-                print("{0} : Initialized => {1}".format(k, repr(my_locals[k])))
-                watch_values[k] = my_locals[k]
-    '''
+
     return False
 
 commands = ["w c", "c", "c", "w out", "c", "c", "c", "q"]
+#commands = ["w c", "s", "w out", "c", "c", "c", "q"]
+
 
 def input_command():
     #command = raw_input("(my-spyder) ")
     global commands
     command = commands.pop(0)
     return command
-
 """
 Our traceit function
 Improve the traceit function to watch for variables in the watchpoint
@@ -138,32 +128,34 @@ somevar ":", repr(old-value), "=>", repr(new-value)
 when the value of the variable has changed.
 If the value is unchanged, do not print anything.
 """
+
+
 def traceit(frame, event, trace_arg):
     global stepping
     global watchpoints
     global watch_values
 
     if event == 'line':
+        # Check if watched variables have changed, or need to be initialised.
+        for k, v in frame.f_locals.iteritems():
+            if k in watchpoints and watchpoints[k]:  # Watched variable.
+                print event, frame.f_lineno, frame.f_code.co_name, frame.f_locals
+                if k in watch_values and v != watch_values[k]:  # Initialised, changed.
+                    #c : '"' => '<'
+                    print("{0} : {1} => {2}".format(k, watch_values[k], frame.f_locals[k]))
+                    watch_values[k] = frame.f_locals[k]
+                elif k not in watch_values:  # Needs to be initialised.
+                    #c : Initialized => '"'
+                    print("{0} : Initialized => {1}".format(k, repr(frame.f_locals[k])))
+                    watch_values[k] = frame.f_locals[k]
+
         if stepping or frame.f_lineno in breakpoints:
             resume = False
             while not resume:
                 print event, frame.f_lineno, frame.f_code.co_name, frame.f_locals
                 command = input_command()
-                print frame.f_locals
-
-                # Check if watched variables have changed, or need to be initialised.
-                for k, v in frame.f_locals.iteritems():
-                    print k, v
-                    if k in watchpoints and watchpoints[k]:  # Watched variable.
-                        if k in watch_values and v != watch_values[k]:  # Initialised, changed.
-                            #c : '"' => '<'
-                            print("{0} : {1} => {2}".format(k, watch_values[k], frame.f_locals[k]))
-                            watch_values[k] = frame.f_locals[k]
-                        elif k not in watch_values:  # Needs to be initialised.
-                            #c : Initialized => '"'
-                            print("{0} : Initialized => {1}".format(k, repr(frame.f_locals[k])))
-                            watch_values[k] = frame.f_locals[k]
                 resume = debug(command, frame.f_locals)
+
     return traceit
 
 # Using the tracer
