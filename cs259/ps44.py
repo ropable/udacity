@@ -87,7 +87,7 @@ def get_state(input, line, iteration):
 
     return the_state
 
-# FILL IN FROM YOUR SOLUTION IN THE PREVIOUS EXERCISE
+
 def trace_apply_diff(frame, event, arg):
     global the_line
     global the_iteration
