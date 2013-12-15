@@ -36,7 +36,6 @@ def debug(command, my_locals):
     """
     Our debug function
     """
-    print "Entered debug with {0}".format(command)
     global stepping
     global breakpoints
     global watchpoints
@@ -114,6 +113,7 @@ def input_command():
     global commands
     command = commands.pop(0)
     return command
+
 """
 Our traceit function
 Improve the traceit function to watch for variables in the watchpoint
@@ -137,15 +137,14 @@ def traceit(frame, event, trace_arg):
         # Check if watched variables have changed, or need to be initialised.
         for k, v in frame.f_locals.iteritems():
             if k in watchpoints and watchpoints[k]:  # Watched variable == True
-                stepping = True  # Begin stepping.
                 if k in watch_values and v != watch_values[k]:  # Initialised, changed.
+                    stepping = True  # Begin stepping.
                     print event, frame.f_lineno, frame.f_code.co_name
-                    #c : '"' => '<'
                     print("{0} : {1} => {2}".format(k, repr(watch_values[k]), repr(frame.f_locals[k])))
                     watch_values[k] = frame.f_locals[k]
-                elif k not in watch_values:  # Needs to be initialised.
+                elif k not in watch_values:  # Variable needs to be initialised.
+                    stepping = True  # Begin stepping.
                     print event, frame.f_lineno, frame.f_code.co_name
-                    #c : Initialized => '"'
                     print("{0} : Initialized => {1}".format(k, repr(frame.f_locals[k])))
                     watch_values[k] = frame.f_locals[k]
 
