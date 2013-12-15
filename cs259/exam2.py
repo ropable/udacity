@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-# Simple debugger
-# See instructions around line 85
 import sys
 #import readline
 
@@ -38,6 +36,7 @@ def debug(command, my_locals):
     """
     Our debug function
     """
+    print "Entered debug with {0}".format(command)
     global stepping
     global breakpoints
     global watchpoints
@@ -108,7 +107,6 @@ def debug(command, my_locals):
     return False
 
 commands = ["w c", "c", "c", "w out", "c", "c", "c", "q"]
-#commands = ["w c", "s", "w out", "c", "c", "c", "q"]
 
 
 def input_command():
@@ -138,13 +136,15 @@ def traceit(frame, event, trace_arg):
     if event == 'line':
         # Check if watched variables have changed, or need to be initialised.
         for k, v in frame.f_locals.iteritems():
-            if k in watchpoints and watchpoints[k]:  # Watched variable.
-                print event, frame.f_lineno, frame.f_code.co_name, frame.f_locals
+            if k in watchpoints and watchpoints[k]:  # Watched variable == True
+                stepping = True  # Begin stepping.
                 if k in watch_values and v != watch_values[k]:  # Initialised, changed.
+                    print event, frame.f_lineno, frame.f_code.co_name
                     #c : '"' => '<'
-                    print("{0} : {1} => {2}".format(k, watch_values[k], frame.f_locals[k]))
+                    print("{0} : {1} => {2}".format(k, repr(watch_values[k]), repr(frame.f_locals[k])))
                     watch_values[k] = frame.f_locals[k]
                 elif k not in watch_values:  # Needs to be initialised.
+                    print event, frame.f_lineno, frame.f_code.co_name
                     #c : Initialized => '"'
                     print("{0} : Initialized => {1}".format(k, repr(frame.f_locals[k])))
                     watch_values[k] = frame.f_locals[k]
@@ -152,7 +152,6 @@ def traceit(frame, event, trace_arg):
         if stepping or frame.f_lineno in breakpoints:
             resume = False
             while not resume:
-                print event, frame.f_lineno, frame.f_code.co_name, frame.f_locals
                 command = input_command()
                 resume = debug(command, frame.f_locals)
 
