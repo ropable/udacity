@@ -14,14 +14,13 @@
 import sys
 import copy
 
-#buggy program
+
 def remove_html_markup(s):
-    tag   = False
+    tag = False
     quote = False
-    out   = ""
+    out = ""
 
     for c in s:
-
         if c == '<' and not quote:
             tag = True
         elif c == '>' and not quote:
@@ -32,6 +31,7 @@ def remove_html_markup(s):
             out = out + c
 
     return out
+
 
 def ddmin(s):
     # you may need to use this to test if the values you pass actually make
@@ -66,22 +66,26 @@ def ddmin(s):
 # Use this function to record the covered lines in the program, in order of
 # their execution and save in the list coverage
 coverage = []
+
+
 def traceit(frame, event, arg):
     global coverage
 
-    # YOUR CODE HERE
+    if event == 'line':
+        coverage.append(frame.f_lineno)
 
     return traceit
 
 # We use these variables to communicate between callbacks and drivers
-the_line      = None
+the_line = None
 the_iteration = None
-the_state     = None
-the_diff      = None
-the_input     = None
+the_state = None
+the_diff = None
+the_input = None
 
-# Stop at THE_LINE/THE_ITERATION and store the state in THE_STATE
+
 def trace_fetch_state(frame, event, arg):
+    # Stop at THE_LINE/THE_ITERATION and store the state in THE_STATE
     global the_line
     global the_iteration
     global the_state
@@ -95,22 +99,24 @@ def trace_fetch_state(frame, event, arg):
 
     return trace_fetch_state
 
-# Get the state at LINE/ITERATION
+
 def get_state(input, line, iteration):
+    # Get the state at LINE/ITERATION
     global the_line
     global the_iteration
     global the_state
 
-    the_line      = line
+    the_line = line
     the_iteration = iteration
     sys.settrace(trace_fetch_state)
-    y = remove_html_markup(input)
+    remove_html_markup(input)
     sys.settrace(None)
 
     return the_state
 
-# Stop at THE_LINE/THE_ITERATION and apply the differences in THE_DIFF
+
 def trace_apply_diff(frame, event, arg):
+    # Stop at THE_LINE/THE_ITERATION and apply the differences in THE_DIFF
     global the_line
     global the_diff
     global the_iteration
@@ -124,15 +130,16 @@ def trace_apply_diff(frame, event, arg):
 
     return trace_apply_diff
 
-# Testing function: Call remove_html_output, stop at THE_LINE/THE_ITERATION,
-# and apply the diffs in DIFFS at THE_LINE
+
 def test(diffs):
+    # Testing function: Call remove_html_output, stop at THE_LINE/THE_ITERATION,
+    # and apply the diffs in DIFFS at THE_LINE
     global the_diff
     global the_input
     global the_line
     global the_iteration
 
-    line      = the_line
+    line = the_line
     iteration = the_iteration
 
     the_diff = diffs
@@ -140,7 +147,7 @@ def test(diffs):
     y = remove_html_markup(the_input)
     sys.settrace(None)
 
-    the_line      = line
+    the_line = line
     the_iteration = iteration
 
     if y.find('<') == -1:
@@ -148,12 +155,18 @@ def test(diffs):
     else:
         return "FAIL"
 
+
 def make_locations(coverage):
-    # YOUR CODE HERE
     # This function should return a list of tuples in the format
     # [(line, iteration), (line, iteration) ...], as auto_cause_chain
     # expects.
+    locations, tmp = [], []
+    coverage.reverse()  # Reverse the list so pop() pulls items out in order.
+    for l in coverage:
+        tmp.append(l)  # Append the item into tmp, to derive counts/iterations.
+        locations.append((l, tmp.count(l)))
     return locations
+
 
 def auto_cause_chain(locations):
     global html_fail, html_pass, the_input, the_line, the_iteration, the_diff
@@ -169,7 +182,7 @@ def auto_cause_chain(locations):
         # Compute the differences
         diffs = []
         for var in state_fail.keys():
-            if not state_pass.has_key(var) or state_pass[var] != state_fail[var]:
+            if not var in state_pass or state_pass[var] != state_fail[var]:
                 diffs.append((var, state_fail[var]))
 
         # Minimize the failure-inducing set of differences
@@ -178,8 +191,8 @@ def auto_cause_chain(locations):
         # which lines/iterations are the ones that are part of the
         # failure chain and print out only these.
         the_input = html_pass
-        the_line  = line
-        the_iteration  = iteration
+        the_line = line
+        the_iteration = iteration
         # You will have to use the following functions and output formatting:
         #    cause = ddmin(diffs)
         #    # Pretty output
