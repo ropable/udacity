@@ -176,6 +176,18 @@ def auto_cause_chain(locations):
     global html_fail, html_pass, the_input, the_line, the_iteration, the_diff
     print "The program was started with", repr(html_fail)
 
+    earliest_fail = []
+    fail_state = None
+
+    for (line, iteration) in locations:
+        earliest_fail.append((line, iteration))
+        # Get the passing and the failing state
+        state_pass = get_state(html_pass, line, iteration)
+        state_fail = get_state(html_fail, line, iteration)
+        if 'out' in state_fail and state_fail['out'].find('<') != -1:
+            fail_state = copy.deepcopy(state_fail)  # Preserve the state.
+            break
+
     # Test over multiple locations
     for (line, iteration) in locations:
 
@@ -185,7 +197,7 @@ def auto_cause_chain(locations):
 
         # Compute the differences
         diffs = []
-        for var in state_fail.keys():
+        for var in state_fail:
             if not var in state_pass or state_pass[var] != state_fail[var]:
                 diffs.append((var, state_fail[var]))
 
@@ -198,7 +210,11 @@ def auto_cause_chain(locations):
         the_line = line
         the_iteration = iteration
         # You will have to use the following functions and output formatting:
-        #    cause = ddmin(diffs)
+        try:
+            cause = ddmin(diffs)
+            print cause
+        except:
+            pass
         #    # Pretty output
         #    print "Then", var, "became", repr(value)
 
@@ -212,16 +228,13 @@ html_pass = "'<b>foo</b>'"
 
 # This will fill the coverage variable with all lines executed in a
 # failing run
-#sys.settrace(traceit)
-#remove_html_markup(html_fail)
-#sys.settrace(None)
+sys.settrace(traceit)
+remove_html_markup(html_fail)
+sys.settrace(None)
 
-#locations = make_locations(coverage)
-#print locations
-#auto_cause_chain(locations)
-
-state = get_state(html_fail, 21, 1)
-print state
+locations = make_locations(coverage)
+print locations
+auto_cause_chain(locations)
 
 # The coverage :
 # [8, 9, 10, 11, 12, 14, 16, 17, 11, 12... # and so on
