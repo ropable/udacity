@@ -13,6 +13,7 @@
 # See some hints at the provided functions, and an example output at the end.
 import sys
 import copy
+#import linecache
 
 
 def remove_html_markup(s):
@@ -72,6 +73,9 @@ def traceit(frame, event, arg):
     global coverage
 
     if event == 'line':
+        # Print each line as it gets executed.
+        #print('{0}: {1}'.format(
+        #    frame.f_lineno, linecache.getline(frame.f_code.co_filename, frame.f_lineno)),)
         coverage.append(frame.f_lineno)
 
     return traceit
@@ -161,10 +165,10 @@ def make_locations(coverage):
     # [(line, iteration), (line, iteration) ...], as auto_cause_chain
     # expects.
     locations, tmp = [], []
-    coverage.reverse()  # Reverse the list so pop() pulls items out in order.
     for l in coverage:
         tmp.append(l)  # Append the item into tmp, to derive counts/iterations.
         locations.append((l, tmp.count(l)))
+
     return locations
 
 
@@ -208,13 +212,16 @@ html_pass = "'<b>foo</b>'"
 
 # This will fill the coverage variable with all lines executed in a
 # failing run
-coverage = []
-sys.settrace(traceit)
-remove_html_markup(html_fail)
-sys.settrace(None)
+#sys.settrace(traceit)
+#remove_html_markup(html_fail)
+#sys.settrace(None)
 
-locations = make_locations(coverage)
-auto_cause_chain(locations)
+#locations = make_locations(coverage)
+#print locations
+#auto_cause_chain(locations)
+
+state = get_state(html_fail, 21, 1)
+print state
 
 # The coverage :
 # [8, 9, 10, 11, 12, 14, 16, 17, 11, 12... # and so on
