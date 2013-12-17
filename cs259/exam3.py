@@ -176,16 +176,18 @@ def auto_cause_chain(locations):
     global html_fail, html_pass, the_input, the_line, the_iteration, the_diff
     print "The program was started with", repr(html_fail)
 
-    earliest_fail = []
+    earliest_fail = None
     fail_state = None
+    failure_chain = []
 
     for (line, iteration) in locations:
-        earliest_fail.append((line, iteration))
+        failure_chain.append((line, iteration))
         # Get the passing and the failing state
         state_pass = get_state(html_pass, line, iteration)
         state_fail = get_state(html_fail, line, iteration)
         if 'out' in state_fail and state_fail['out'].find('<') != -1:
             fail_state = copy.deepcopy(state_fail)  # Preserve the state.
+            earliest_fail = [line, iteration]
             break
 
     # Test over multiple locations
@@ -233,7 +235,7 @@ remove_html_markup(html_fail)
 sys.settrace(None)
 
 locations = make_locations(coverage)
-print locations
+#print locations
 auto_cause_chain(locations)
 
 # The coverage :
