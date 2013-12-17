@@ -176,6 +176,27 @@ def auto_cause_chain(locations):
     global html_fail, html_pass, the_input, the_line, the_iteration, the_diff
     print "The program was started with", repr(html_fail)
 
+    print locations
+    failure_chain = []
+    failed = False
+    earliest_fail = None
+
+    while not failed:
+        for (line, iteration) in locations:
+            failure_chain.append((line, iteration))
+            # Get the passing and the failing state
+            state_pass = get_state(html_pass, line, iteration)
+            state_fail = get_state(html_fail, line, iteration)
+            if 'out' in state_fail and state_fail['out'].find('<') != -1:
+                earliest_fail = [line, iteration]
+                failed = True
+                break
+
+    print failure_chain
+    print earliest_fail
+    state_pass = get_state(html_pass, line, iteration)
+    state_fail = get_state(html_fail, line, iteration)
+
     # Test over multiple locations
     for (line, iteration) in locations:
 
@@ -185,10 +206,11 @@ def auto_cause_chain(locations):
 
         # Compute the differences
         diffs = []
-        for var in state_fail.keys():
+        for var in state_fail:
             if not var in state_pass or state_pass[var] != state_fail[var]:
                 diffs.append((var, state_fail[var]))
 
+        #print line, iteration, diffs
         # Minimize the failure-inducing set of differences
         # Since this time you have all the covered lines and iterations in
         # locations, you will have to figure out how to automatically detect
@@ -212,16 +234,14 @@ html_pass = "'<b>foo</b>'"
 
 # This will fill the coverage variable with all lines executed in a
 # failing run
-#sys.settrace(traceit)
-#remove_html_markup(html_fail)
-#sys.settrace(None)
+sys.settrace(traceit)
+remove_html_markup(html_fail)
+sys.settrace(None)
 
-#locations = make_locations(coverage)
+locations = make_locations(coverage)
 #print locations
-#auto_cause_chain(locations)
+auto_cause_chain(locations)
 
-state = get_state(html_fail, 21, 1)
-print state
 
 # The coverage :
 # [8, 9, 10, 11, 12, 14, 16, 17, 11, 12... # and so on
