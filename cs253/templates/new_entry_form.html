@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>New blog post</title>
+        <link type=""text/css rel="stylesheet" href="/css/bootstrap.min.css">
+    </head>
+    <body>
+        <h1>New blog post</h1>
+        <form class="form-horizontal" method="post">
+            {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+            <fieldset>
+                <div class="control-group">
+                    <label class="control-label" for="subject">Subject</label>
+                    <div class="controls">
+                        <input type="text" class="input-xlarge" name="subject" value="{{ subject }}">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="content">Content</label>
+                    <div class="controls">
+                        <textarea class="ipnut-xlarge" rows="5" name="content">{{ content }}</textarea>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </fieldset>
+        </form>
+    </body>
+</html>
