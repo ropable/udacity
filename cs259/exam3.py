@@ -176,26 +176,19 @@ def auto_cause_chain(locations):
     global html_fail, html_pass, the_input, the_line, the_iteration, the_diff
     print "The program was started with", repr(html_fail)
 
-    print locations
-    failure_chain = []
-    failed = False
     earliest_fail = None
+    fail_state = None
+    failure_chain = []
 
-    while not failed:
-        for (line, iteration) in locations:
-            failure_chain.append((line, iteration))
-            # Get the passing and the failing state
-            state_pass = get_state(html_pass, line, iteration)
-            state_fail = get_state(html_fail, line, iteration)
-            if 'out' in state_fail and state_fail['out'].find('<') != -1:
-                earliest_fail = [line, iteration]
-                failed = True
-                break
-
-    print failure_chain
-    print earliest_fail
-    state_pass = get_state(html_pass, line, iteration)
-    state_fail = get_state(html_fail, line, iteration)
+    for (line, iteration) in locations:
+        failure_chain.append((line, iteration))
+        # Get the passing and the failing state
+        state_pass = get_state(html_pass, line, iteration)
+        state_fail = get_state(html_fail, line, iteration)
+        if 'out' in state_fail and state_fail['out'].find('<') != -1:
+            fail_state = copy.deepcopy(state_fail)  # Preserve the state.
+            earliest_fail = [line, iteration]
+            break
 
     # Test over multiple locations
     for (line, iteration) in locations:
@@ -210,7 +203,6 @@ def auto_cause_chain(locations):
             if not var in state_pass or state_pass[var] != state_fail[var]:
                 diffs.append((var, state_fail[var]))
 
-        #print line, iteration, diffs
         # Minimize the failure-inducing set of differences
         # Since this time you have all the covered lines and iterations in
         # locations, you will have to figure out how to automatically detect
@@ -220,7 +212,11 @@ def auto_cause_chain(locations):
         the_line = line
         the_iteration = iteration
         # You will have to use the following functions and output formatting:
-        #    cause = ddmin(diffs)
+        try:
+            cause = ddmin(diffs)
+            print cause
+        except:
+            pass
         #    # Pretty output
         #    print "Then", var, "became", repr(value)
 
@@ -241,7 +237,6 @@ sys.settrace(None)
 locations = make_locations(coverage)
 #print locations
 auto_cause_chain(locations)
-
 
 # The coverage :
 # [8, 9, 10, 11, 12, 14, 16, 17, 11, 12... # and so on
