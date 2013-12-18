@@ -20,11 +20,11 @@ answer_function = "X"   # One of f1, f2, f3
 answer_bin = 42         # One of 1, 0, -1
 answer_value = 1.0000   # precision to 4 decimal places.
 
-# The buggy program
+
 def remove_html_markup(s):
-    tag   = False
+    tag = False
     quote = False
-    out   = ""
+    out = ""
 
     for c in s:
 
@@ -48,6 +48,8 @@ coverage = {}
 # and frame.f_code.co_name will hold the function name
 return_arg = None
 func_name = None
+
+
 def traceit(frame, event, arg):
     #global coverage
     global return_arg
@@ -65,17 +67,18 @@ def traceit(frame, event, arg):
 
     return traceit
 
-# Calculate phi coefficient from given values
-def phi(n11, n10, n01, n00):
-    return ((n11 * n00 - n10 * n01) /
-             math.sqrt((n10 + n11) * (n01 + n00) * (n10 + n00) * (n01 + n11)))
 
-# Print out values of phi, and result of runs for each covered line
+def phi(n11, n10, n01, n00):
+    # Calculate phi coefficient from given values
+    return ((n11 * n00 - n10 * n01) / math.sqrt((n10 + n11) * (n01 + n00) * (n10 + n00) * (n01 + n11)))
+
+
 def print_tables(tables):
+    # Print out values of phi, and result of runs for each covered line
     for filename in tables.keys():
         lines = open(filename).readlines()
-        for i in range(23, 40): # lines of the remove_html_markup in this file
-            if tables[filename].has_key(i + 1):
+        for i in range(23, 40):  # lines of the remove_html_markup in this file
+            if (i + 1) in tables[filename]:
                 (n11, n10, n01, n00) = tables[filename][i + 1]
                 try:
                     factor = phi(n11, n10, n01, n00)
@@ -88,10 +91,9 @@ def print_tables(tables):
 
             print prefix, lines[i],
 
-# Run the program with each test case and record
-# input, outcome and coverage of lines
+
 def run_tests(inputs):
-    runs   = []
+    runs = []
     for input in inputs:
         global coverage
         coverage = {}
@@ -107,26 +109,28 @@ def run_tests(inputs):
         runs.append((input, outcome, coverage))
     return runs
 
-# Create empty tuples for each covered line
+
 def init_tables(runs):
+    # Create empty tuples for each covered line
     tables = {}
     for (input, outcome, coverage) in runs:
         for filename, lines in coverage.iteritems():
             for line in lines.keys():
-                if not tables.has_key(filename):
+                if not filename in tables:
                     tables[filename] = {}
-                if not tables[filename].has_key(line):
+                if not line in tables[filename]:
                     tables[filename][line] = (0, 0, 0, 0)
 
     return tables
 
-# Compute n11, n10, etc. for each line
+
 def compute_n(tables):
+    # Compute n11, n10, etc. for each line
     for filename, lines in tables.iteritems():
         for line in lines.keys():
             (n11, n10, n01, n00) = tables[filename][line]
             for (input, outcome, coverage) in runs:
-                if coverage.has_key(filename) and coverage[filename].has_key(line):
+                if filename in coverage and line in coverage[filename]:
                     # Covered in this run
                     if outcome == "FAIL":
                         n11 += 1  # covered and fails
@@ -145,18 +149,20 @@ def compute_n(tables):
 # the more likely the line is the cause of the failures.
 
 # These are the test cases
-inputs_line = ['foo',
-          '<b>foo</b>',
-          '"<b>foo</b>"',
-          '"foo"',
-          "'foo'",
-          '<em>foo</em>',
-          '<a href="foo">foo</a>',
-          '""',
-          "<p>"]
+inputs_line = [
+    'foo',
+    '<b>foo</b>',
+    '"<b>foo</b>"',
+    '"foo"',
+    "'foo'",
+    '<em>foo</em>',
+    '<a href="foo">foo</a>',
+    '""',
+    "<p>"]
 runs = run_tests(inputs_line)
 
 tables = init_tables(runs)
+print tables
 
 tables = compute_n(tables)
 
@@ -164,6 +170,7 @@ print_tables(tables)
 
 ###### MYSTERY FUNCTION
 returns = []
+
 
 def mystery(magic):
     global return_arg
@@ -209,32 +216,36 @@ def mystery(magic):
 
 
 # These are the input values you should test the mystery function with
-inputs = [([1,2],"ab", 10),
-          ([1,2],"ab", 2),
-          ([1,2],"ab", 12),
-          ([1,2],"ab", 21),
-          ("a",1, [1]),
-          ([1],"a", 1),
-          ([1,2],"abcd", 8),
-          ([1,2,3,4,5],"abcde", 8),
-          ([1,2,3,4,5],"abcdefgijkl", 18),
-          ([1,2,3,4,5,6,7],"abcdefghij", 5)]
+inputs = [
+    ([1, 2], "ab", 10),
+    ([1, 2], "ab", 2),
+    ([1, 2], "ab", 12),
+    ([1, 2], "ab", 21),
+    ("a", 1, [1]),
+    ([1], "a", 1),
+    ([1, 2], "abcd", 8),
+    ([1, 2, 3, 4, 5], "abcde", 8),
+    ([1, 2, 3, 4, 5], "abcdefgijkl", 18),
+    ([1, 2, 3, 4, 5, 6, 7], "abcdefghij", 5)]
+
 
 def f1(ml):
     if type(ml) is not list:
         return -1
-    elif len(ml) <6 :
+    elif len(ml) < 6:
         return len(ml)
     else:
         return 0
 
+
 def f2(ms):
     if type(ms) is not str:
         return -1
-    elif len(ms) <6 :
+    elif len(ms) < 6:
         return len(ms)
     else:
         return 0
+
 
 def f3(mn):
     if type(mn) is not int:
@@ -368,6 +379,8 @@ for i in returns:
 answer_function = "X"   # One of f1, f2, f3
 answer_bin = 42         # One of 1, 0, -1
 answer_value = 0   # precision to 4 decimal places.
+
+print d
 
 for func, tables in d.iteritems():
     for group, values in tables.iteritems():

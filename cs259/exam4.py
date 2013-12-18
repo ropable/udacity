@@ -49,6 +49,8 @@ def remove_html_markup(s):
 
 # global variable to keep the coverage data in
 coverage = {}
+return_arg = None
+func_name = None
 
 
 def traceit(frame, event, arg):
@@ -57,6 +59,8 @@ def traceit(frame, event, arg):
     # that case the variable arg will hold the return value of the function,
     # and frame.f_code.co_name will hold the function name
     global coverage
+    global return_arg
+    global func_name
 
     if event == "line":
         filename = frame.f_code.co_filename
@@ -64,6 +68,9 @@ def traceit(frame, event, arg):
         if not filename in coverage:
             coverage[filename] = {}
         coverage[filename][lineno] = True
+    if event == "return":
+        return_arg = arg
+        func_name = frame.f_code.co_name
 
     return traceit
 
@@ -170,19 +177,38 @@ tables = compute_n(tables)
 print_tables(tables)
 
 # These are the input values you should test the mystery function with
-inputs = ["aaaaa223%", "aaaaaaaatt41@#", "asdfgh123!", "007001007", "143zxc@#$ab", "3214&*#&!(", "qqq1dfjsns", "12345%@afafsaf"]
+inputs = [
+    "aaaaa223%", "aaaaaaaatt41@#", "asdfgh123!", "007001007", "143zxc@#$ab", "3214&*#&!(",
+    "qqq1dfjsns", "12345%@afafsaf"]
+
+###### MYSTERY FUNCTION
+returns = []
 
 
 def mystery(magic):
-    ###### MYSTERY FUNCTION
+    global return_arg
+    global func_name
+    global returns
+
     assert type(magic) == str
     assert len(magic) > 0
 
+    tmp = []
+
+    sys.settrace(traceit)
     r1 = f1(magic)
+    sys.settrace(None)
+    tmp.append([func_name, return_arg])
 
+    sys.settrace(traceit)
     r2 = f2(magic)
+    sys.settrace(None)
+    tmp.append([func_name, return_arg])
 
+    sys.settrace(traceit)
     r3 = f3(magic)
+    sys.settrace(None)
+    tmp.append([func_name, return_arg])
 
     print magic, r1, r2, r3
 
@@ -194,6 +220,13 @@ def mystery(magic):
         return "FAIL"
     else:
         return "PASS"
+
+    for t in tmp:
+        t.append(i)
+        returns.append(tuple(t))
+    # Now we have a list of tuples: (function, return, PASS/FAIL)
+
+    return i
 
 
 def f1(ml):
@@ -237,11 +270,140 @@ def f3(mn):
 
 # Run the mystery function with the inputs
 for i in inputs:
-    mystery(i)
+    print mystery(i)
 
+
+#{'n11': 0, 'n10': 0, 'n01': 0, 'n00': 0}
+d = {
+    'f1': {
+        'pos': [0, 0, 0, 0],
+        'zero': [0, 0, 0, 0],
+        'neg': [0, 0, 0, 0]
+    },
+    'f2': {
+        'pos': [0, 0, 0, 0],
+        'zero': [0, 0, 0, 0],
+        'neg': [0, 0, 0, 0]
+    },
+    'f3': {
+        'pos': [0, 0, 0, 0],
+        'zero': [0, 0, 0, 0],
+        'neg': [0, 0, 0, 0]
+    },
+}
+
+for i in returns:
+    if i[0] == 'f1':  # f1
+        if i[1] > 0:  # Positive
+            if i[2] == 'PASS':
+                d['f1']['pos'][0] += 1
+            else:
+                d['f1']['pos'][1] += 1
+        else:  # Zero or negative.
+            if i[2] == 'PASS':
+                d['f1']['pos'][2] += 1
+            else:
+                d['f1']['pos'][3] += 1
+        if i[1] == 0:  # Zero
+            if i[2] == 'PASS':
+                d['f1']['zero'][0] += 1
+            else:
+                d['f1']['zero'][1] += 1
+        else:  # Positive or negative.
+            if i[2] == 'PASS':
+                d['f1']['zero'][2] += 1
+            else:
+                d['f1']['zero'][3] += 1
+        if i[1] < 0:  # negative
+            if i[2] == 'PASS':
+                d['f1']['neg'][0] += 1
+            else:
+                d['f1']['neg'][1] += 1
+        else:  # Positive or negative.
+            if i[2] == 'PASS':
+                d['f1']['neg'][2] += 1
+            else:
+                d['f1']['neg'][3] += 1
+    if i[0] == 'f2':  # f2
+        if i[1] > 0:  # Positive
+            if i[2] == 'PASS':
+                d['f2']['pos'][0] += 1
+            else:
+                d['f2']['pos'][1] += 1
+        else:  # Zero or negative.
+            if i[2] == 'PASS':
+                d['f2']['pos'][2] += 1
+            else:
+                d['f2']['pos'][3] += 1
+        if i[1] == 0:  # Zero
+            if i[2] == 'PASS':
+                d['f2']['zero'][0] += 1
+            else:
+                d['f2']['zero'][1] += 1
+        else:  # Positive or negative.
+            if i[2] == 'PASS':
+                d['f2']['zero'][2] += 1
+            else:
+                d['f2']['zero'][3] += 1
+        if i[1] < 0:  # negative
+            if i[2] == 'PASS':
+                d['f2']['neg'][0] += 1
+            else:
+                d['f2']['neg'][1] += 1
+        else:  # Positive or negative.
+            if i[2] == 'PASS':
+                d['f2']['neg'][2] += 1
+            else:
+                d['f2']['neg'][3] += 1
+    if i[0] == 'f3':  # f3
+        if i[1] > 0:  # Positive
+            if i[2] == 'PASS':
+                d['f3']['pos'][0] += 1
+            else:
+                d['f3']['pos'][1] += 1
+        else:  # Zero or negative.
+            if i[2] == 'PASS':
+                d['f3']['pos'][2] += 1
+            else:
+                d['f3']['pos'][3] += 1
+        if i[1] == 0:  # Zero
+            if i[2] == 'PASS':
+                d['f3']['zero'][0] += 1
+            else:
+                d['f3']['zero'][1] += 1
+        else:  # Positive or negative.
+            if i[2] == 'PASS':
+                d['f3']['zero'][2] += 1
+            else:
+                d['f3']['zero'][3] += 1
+        if i[1] < 0:  # negative
+            if i[2] == 'PASS':
+                d['f3']['neg'][0] += 1
+            else:
+                d['f3']['neg'][1] += 1
+        else:  # Positive or negative.
+            if i[2] == 'PASS':
+                d['f3']['neg'][2] += 1
+            else:
+                d['f3']['neg'][3] += 1
+
+print d
+answer_value = 0   # precision to 4 decimal places.
+
+for func, tables in d.iteritems():
+    for group, values in tables.iteritems():
+        try:
+            phi_val = round(phi(*values), 4)
+        except:
+            phi_val = None
+        #print('{0}: {1} phi={2}'.format(func, group, phi_val))
+
+        if phi_val and phi_val > answer_value:
+            answer_value = phi_val
+            answer_function = func
+            answer_bin = group
 
 # Final answer:
-answer_function = "f5"   # One of f1, f2, f3
-answer_bin = 42          # One of 1, 0, -1
-answer_function_phi = 42.0000    # precision to 4 decimal places.
-answer_line_phi = 42.0000  # precision to 4 decimal places.
+print answer_function
+print answer_bin
+print answer_value
