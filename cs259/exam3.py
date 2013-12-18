@@ -24,10 +24,7 @@ def remove_html_markup(s):
 def ddmin(s):
     # you may need to use this to test if the values you pass actually make
     # test fail.
-    try:
-        assert test(s) == "FAIL"
-    except:
-        return None
+    assert test(s) == "FAIL"
 
     n = 2     # Initial granularity
     while len(s) >= 2:
@@ -70,7 +67,7 @@ def traceit(frame, event, arg):
 # We use these variables to communicate between callbacks and drivers
 the_line = None
 the_iteration = None
-the_state = None
+the_state = {}
 the_diff = None
 the_input = None
 
@@ -163,9 +160,8 @@ def make_locations(coverage):
 
 def auto_cause_chain(locations):
     global html_fail, html_pass, the_input, the_line, the_iteration, the_diff
-    print "The program was started with", repr(html_fail)
 
-    candidates = []  # List to store candicate failing vars (var, value)
+    failure_vars = []  # List to store candicate failing vars (var, value)
 
     # Test over multiple locations
     for (line, iteration) in locations:
@@ -175,38 +171,33 @@ def auto_cause_chain(locations):
         state_fail = get_state(html_fail, line, iteration)
 
         # Compute the differences
+        # diffs is a list of (var, val) pairs from a failing test, that differ
+        # from those in a passing test.
         diffs = []
-        for var in state_fail:
-            if not var in state_pass or state_pass[var] != state_fail[var]:
-                diffs.append((var, state_fail[var]))
-        # diffs is a list of tuples (var, value) that differ from a passing test.
+        for var, value in state_fail.iteritems():
+            if var in state_pass and state_pass[var] != value:
+                diffs.append((var, value))
 
         # Minimize the failure-inducing set of differences
         the_input = html_pass
         the_line = line
         the_iteration = iteration
 
-        cause = ddmin(diffs)  # You have to check out if cause has more than one tuple in it,
-                            # one may cause a failure and one may not.
-        # if length of cause is greater than one, you have to send it through ddmin again.
+        # ddmin will return an Exception if diffs is empty.
+        # In this instance, just pass diffs through as the cause.
+        try:
+            cause = ddmin(diffs)
+        except:
+            cause = diffs
 
         if cause:
-            if len(cause) > 1:
-                for tup in cause:
-                    newcause = ddmin(tup)
-                    if newcause:
-                        if newcause[0] not in candidates:   # candidates is a list of tuples
-                                # it is initialized just above the for loop in auto_cause_chain.
-                            candidates.append(newcause[0])
+            for var in cause:
+                if var not in failure_vars:
+                    failure_vars.append(var)
 
-            else:
-                if cause[0] not in candidates:
-                    candidates.append(cause[0])
-
-    for tup in candidates:
-        var = tup[0]
-        value = tup[1]
-        print "Then", repr(var), 'became', repr(value)
+    print "The program was started with", repr(html_fail)
+    for var in failure_vars:
+        print("Then {0} became {1}".format(repr(var[0]), repr(var[1])))
     print "Then the program failed."
 
 ###### Testing runs
