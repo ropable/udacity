@@ -1,19 +1,6 @@
 #!/usr/bin/env python
-# INSTRUCTIONS
-# Your task for this assignment is to combine the principles that you learned
-# in unit 3, 4 and 5 and create a fully automated program that can display
-# the cause-effect chain automatically.
-# In problem set 4 you created a program that generated cause chain
-# if you provided it the locations (line and iteration number) to look at.
-# That is not very useful. If you know the lines to look for changes, you
-# already know a lot about the cause. Instead now, with the help of concepts
-# introduced in unit 5 (line coverage), improve this program to create
-# the locations list automatically, and then use it to print out only the
-# failure inducing lines, as before.
-# See some hints at the provided functions, and an example output at the end.
 import sys
 import copy
-#import linecache
 
 
 def remove_html_markup(s):
@@ -73,9 +60,6 @@ def traceit(frame, event, arg):
     global coverage
 
     if event == 'line':
-        # Print each line as it gets executed.
-        #print('{0}: {1}'.format(
-        #    frame.f_lineno, linecache.getline(frame.f_code.co_filename, frame.f_lineno)),)
         coverage.append(frame.f_lineno)
 
     return traceit
@@ -83,7 +67,7 @@ def traceit(frame, event, arg):
 # We use these variables to communicate between callbacks and drivers
 the_line = None
 the_iteration = None
-the_state = None
+the_state = {}
 the_diff = None
 the_input = None
 
@@ -104,7 +88,7 @@ def trace_fetch_state(frame, event, arg):
     return trace_fetch_state
 
 
-def get_state(input, line, iteration):
+def get_state(input_str, line, iteration):
     # Get the state at LINE/ITERATION
     global the_line
     global the_iteration
@@ -113,8 +97,9 @@ def get_state(input, line, iteration):
     the_line = line
     the_iteration = iteration
     sys.settrace(trace_fetch_state)
-    remove_html_markup(input)
+    remove_html_markup(input_str)
     sys.settrace(None)
+    assert isinstance(the_state, dict)
 
     return the_state
 
@@ -165,6 +150,7 @@ def make_locations(coverage):
     # [(line, iteration), (line, iteration) ...], as auto_cause_chain
     # expects.
     locations, tmp = [], []
+
     for l in coverage:
         tmp.append(l)  # Append the item into tmp, to derive counts/iterations.
         locations.append((l, tmp.count(l)))
@@ -174,21 +160,8 @@ def make_locations(coverage):
 
 def auto_cause_chain(locations):
     global html_fail, html_pass, the_input, the_line, the_iteration, the_diff
-    print "The program was started with", repr(html_fail)
 
-    earliest_fail = None
-    fail_state = None
-    failure_chain = []
-
-    for (line, iteration) in locations:
-        failure_chain.append((line, iteration))
-        # Get the passing and the failing state
-        state_pass = get_state(html_pass, line, iteration)
-        state_fail = get_state(html_fail, line, iteration)
-        if 'out' in state_fail and state_fail['out'].find('<') != -1:
-            fail_state = copy.deepcopy(state_fail)  # Preserve the state.
-            earliest_fail = [line, iteration]
-            break
+    failure_vars = []  # List to store candicate failing vars (var, value)
 
     # Test over multiple locations
     for (line, iteration) in locations:
@@ -198,28 +171,33 @@ def auto_cause_chain(locations):
         state_fail = get_state(html_fail, line, iteration)
 
         # Compute the differences
+        # diffs is a list of (var, val) pairs from a failing test, that differ
+        # from those in a passing test.
         diffs = []
-        for var in state_fail:
-            if not var in state_pass or state_pass[var] != state_fail[var]:
-                diffs.append((var, state_fail[var]))
+        for var, value in state_fail.iteritems():
+            if var in state_pass and state_pass[var] != value:
+                diffs.append((var, value))
 
         # Minimize the failure-inducing set of differences
-        # Since this time you have all the covered lines and iterations in
-        # locations, you will have to figure out how to automatically detect
-        # which lines/iterations are the ones that are part of the
-        # failure chain and print out only these.
         the_input = html_pass
         the_line = line
         the_iteration = iteration
-        # You will have to use the following functions and output formatting:
+
+        # ddmin will return an Exception if diffs is empty.
+        # In this instance, just pass diffs through as the cause.
         try:
             cause = ddmin(diffs)
-            print cause
         except:
-            pass
-        #    # Pretty output
-        #    print "Then", var, "became", repr(value)
+            cause = diffs
 
+        if cause:
+            for var in cause:
+                if var not in failure_vars:
+                    failure_vars.append(var)
+
+    print "The program was started with", repr(html_fail)
+    for var in failure_vars:
+        print("Then {0} became {1}".format(repr(var[0]), repr(var[1])))
     print "Then the program failed."
 
 ###### Testing runs
@@ -228,25 +206,10 @@ def auto_cause_chain(locations):
 html_fail = '"<b>foo</b>"'
 html_pass = "'<b>foo</b>'"
 
-# This will fill the coverage variable with all lines executed in a
-# failing run
+# This will fill the coverage variable with all lines executed in a failing run
 sys.settrace(traceit)
 remove_html_markup(html_fail)
 sys.settrace(None)
 
 locations = make_locations(coverage)
-#print locations
 auto_cause_chain(locations)
-
-# The coverage :
-# [8, 9, 10, 11, 12, 14, 16, 17, 11, 12... # and so on
-# The locations:
-# [(8, 1), (9, 1), (10, 1), (11, 1), (12, 1)...  # and so on
-# The output for the current program and test strings should look like follows:
-"""
-The program was started with '"<b>foo</b>"'
-Then s became '"<b>foo</b>"'
-Then c became '"'
-Then quote became True
-...
-"""
