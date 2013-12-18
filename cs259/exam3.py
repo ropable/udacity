@@ -165,8 +165,7 @@ def auto_cause_chain(locations):
     global html_fail, html_pass, the_input, the_line, the_iteration, the_diff
     print "The program was started with", repr(html_fail)
 
-    failure_vars = []  # List to store candicate failing vars (var, value)
-    breakstate = False
+    candidates = []  # List to store candicate failing vars (var, value)
 
     # Test over multiple locations
     for (line, iteration) in locations:
@@ -187,21 +186,27 @@ def auto_cause_chain(locations):
         the_line = line
         the_iteration = iteration
 
-        try:
-            cause = ddmin(diffs)
-        except:
-            cause = None
+        cause = ddmin(diffs)  # You have to check out if cause has more than one tuple in it,
+                            # one may cause a failure and one may not.
+        # if length of cause is greater than one, you have to send it through ddmin again.
 
-        if cause and not breakstate:
-            for var in cause:
-                if var not in failure_vars:
-                    failure_vars.append(var)
-                if var[0] == 'out' and var[1].find('<') != -1:
-                    breakstate = True
+        if cause:
+            if len(cause) > 1:
+                for tup in cause:
+                    newcause = ddmin(tup)
+                    if newcause:
+                        if newcause[0] not in candidates:   # candidates is a list of tuples
+                                # it is initialized just above the for loop in auto_cause_chain.
+                            candidates.append(newcause[0])
 
-    for var in failure_vars:
-        print("Then {0} became {1}".format(repr(var[0]), repr(var[1])))
+            else:
+                if cause[0] not in candidates:
+                    candidates.append(cause[0])
 
+    for tup in candidates:
+        var = tup[0]
+        value = tup[1]
+        print "Then", repr(var), 'became', repr(value)
     print "Then the program failed."
 
 ###### Testing runs
