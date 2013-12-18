@@ -1,19 +1,6 @@
 #!/usr/bin/env python
-# INSTRUCTIONS
-# Your task for this assignment is to combine the principles that you learned
-# in unit 3, 4 and 5 and create a fully automated program that can display
-# the cause-effect chain automatically.
-# In problem set 4 you created a program that generated cause chain
-# if you provided it the locations (line and iteration number) to look at.
-# That is not very useful. If you know the lines to look for changes, you
-# already know a lot about the cause. Instead now, with the help of concepts
-# introduced in unit 5 (line coverage), improve this program to create
-# the locations list automatically, and then use it to print out only the
-# failure inducing lines, as before.
-# See some hints at the provided functions, and an example output at the end.
 import sys
 import copy
-#import linecache
 
 
 def remove_html_markup(s):
@@ -37,7 +24,10 @@ def remove_html_markup(s):
 def ddmin(s):
     # you may need to use this to test if the values you pass actually make
     # test fail.
-    assert test(s) == "FAIL"
+    try:
+        assert test(s) == "FAIL"
+    except:
+        return None
 
     n = 2     # Initial granularity
     while len(s) >= 2:
@@ -175,7 +165,8 @@ def auto_cause_chain(locations):
     global html_fail, html_pass, the_input, the_line, the_iteration, the_diff
     print "The program was started with", repr(html_fail)
 
-    last_value = {}  # Dict to record the last known value of each variable.
+    failure_vars = []  # List to store candicate failing vars (var, value)
+    breakstate = False
 
     # Test over multiple locations
     for (line, iteration) in locations:
@@ -189,12 +180,9 @@ def auto_cause_chain(locations):
         for var in state_fail:
             if not var in state_pass or state_pass[var] != state_fail[var]:
                 diffs.append((var, state_fail[var]))
+        # diffs is a list of tuples (var, value) that differ from a passing test.
 
         # Minimize the failure-inducing set of differences
-        # Since this time you have all the covered lines and iterations in
-        # locations, you will have to figure out how to automatically detect
-        # which lines/iterations are the ones that are part of the
-        # failure chain and print out only these.
         the_input = html_pass
         the_line = line
         the_iteration = iteration
@@ -204,12 +192,15 @@ def auto_cause_chain(locations):
         except:
             cause = None
 
-        if cause:
+        if cause and not breakstate:
             for var in cause:
-                if not var[0] in last_value or last_value[var[0]] != var[1]:
-                    last_value[var[0]] = var[1]
-                    # Pretty output
-                    print("Then {0} became {1}".format(repr(var[0]), repr(var[1])))
+                if var not in failure_vars:
+                    failure_vars.append(var)
+                if var[0] == 'out' and var[1].find('<') != -1:
+                    breakstate = True
+
+    for var in failure_vars:
+        print("Then {0} became {1}".format(repr(var[0]), repr(var[1])))
 
     print "Then the program failed."
 
