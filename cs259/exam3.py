@@ -73,9 +73,6 @@ def traceit(frame, event, arg):
     global coverage
 
     if event == 'line':
-        # Print each line as it gets executed.
-        #print('{0}: {1}'.format(
-        #    frame.f_lineno, linecache.getline(frame.f_code.co_filename, frame.f_lineno)),)
         coverage.append(frame.f_lineno)
 
     return traceit
@@ -104,7 +101,7 @@ def trace_fetch_state(frame, event, arg):
     return trace_fetch_state
 
 
-def get_state(input, line, iteration):
+def get_state(input_str, line, iteration):
     # Get the state at LINE/ITERATION
     global the_line
     global the_iteration
@@ -113,8 +110,9 @@ def get_state(input, line, iteration):
     the_line = line
     the_iteration = iteration
     sys.settrace(trace_fetch_state)
-    remove_html_markup(input)
+    remove_html_markup(input_str)
     sys.settrace(None)
+    assert isinstance(the_state, dict)
 
     return the_state
 
@@ -165,6 +163,7 @@ def make_locations(coverage):
     # [(line, iteration), (line, iteration) ...], as auto_cause_chain
     # expects.
     locations, tmp = [], []
+
     for l in coverage:
         tmp.append(l)  # Append the item into tmp, to derive counts/iterations.
         locations.append((l, tmp.count(l)))
@@ -176,17 +175,7 @@ def auto_cause_chain(locations):
     global html_fail, html_pass, the_input, the_line, the_iteration, the_diff
     print "The program was started with", repr(html_fail)
 
-    earliest_fail = []
-    fail_state = None
-
-    for (line, iteration) in locations:
-        earliest_fail.append((line, iteration))
-        # Get the passing and the failing state
-        state_pass = get_state(html_pass, line, iteration)
-        state_fail = get_state(html_fail, line, iteration)
-        if 'out' in state_fail and state_fail['out'].find('<') != -1:
-            fail_state = copy.deepcopy(state_fail)  # Preserve the state.
-            break
+    last_value = {}  # Dict to record the last known value of each variable.
 
     # Test over multiple locations
     for (line, iteration) in locations:
@@ -209,14 +198,18 @@ def auto_cause_chain(locations):
         the_input = html_pass
         the_line = line
         the_iteration = iteration
-        # You will have to use the following functions and output formatting:
+
         try:
             cause = ddmin(diffs)
-            print cause
         except:
-            pass
-        #    # Pretty output
-        #    print "Then", var, "became", repr(value)
+            cause = None
+
+        if cause:
+            for var in cause:
+                if not var[0] in last_value or last_value[var[0]] != var[1]:
+                    last_value[var[0]] = var[1]
+                    # Pretty output
+                    print("Then {0} became {1}".format(repr(var[0]), repr(var[1])))
 
     print "Then the program failed."
 
@@ -226,25 +219,10 @@ def auto_cause_chain(locations):
 html_fail = '"<b>foo</b>"'
 html_pass = "'<b>foo</b>'"
 
-# This will fill the coverage variable with all lines executed in a
-# failing run
+# This will fill the coverage variable with all lines executed in a failing run
 sys.settrace(traceit)
 remove_html_markup(html_fail)
 sys.settrace(None)
 
 locations = make_locations(coverage)
-print locations
 auto_cause_chain(locations)
-
-# The coverage :
-# [8, 9, 10, 11, 12, 14, 16, 17, 11, 12... # and so on
-# The locations:
-# [(8, 1), (9, 1), (10, 1), (11, 1), (12, 1)...  # and so on
-# The output for the current program and test strings should look like follows:
-"""
-The program was started with '"<b>foo</b>"'
-Then s became '"<b>foo</b>"'
-Then c became '"'
-Then quote became True
-...
-"""
