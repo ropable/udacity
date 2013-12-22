@@ -104,4 +104,3 @@ var manipulateDOM = function() {
     new_canvas.id = "gameCanvas";
     new_div.appendChild(new_canvas);
 };
-
