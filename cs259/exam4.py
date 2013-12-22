@@ -18,13 +18,11 @@ import math
 # in the variables below.
 # Do NOT set these values dynamically.
 
-answer_function = "f5"   # One of f1, f2, f3
-answer_bin = 42          # One of 1, 0, -1
-answer_function_phi = 42.0000    # precision to 4 decimal places.
-answer_line_phi = 42.0000  # precision to 4 decimal places.
-# if there are several lines with the same phi value, put them in a list,
-# no leading whitespace is required
-answer_line = ["if False:", 'return "FAIL"']  # lines of code
+answer_function = "f2"   # One of f1, f2, f3
+answer_bin = -1          # One of 1, 0, -1
+answer_function_phi = 0.6547    # precision to 4 decimal places.
+answer_line_phi = 1.0000  # precision to 4 decimal places.
+answer_line = ['elif other < 1:', 'grade -= 1']
 
 
 def remove_html_markup(s):
@@ -159,6 +157,33 @@ def run_tests(inputs):
     return runs
 
 
+def run_tests_f2(inputs):
+    # Run the program with each test case and record
+    # input, outcome and coverage of lines
+    runs = []
+    for i in inputs:
+        global coverage
+        coverage = {}
+        r1 = f1(i)
+        # We're only looking for coverage of f2
+        sys.settrace(traceit)
+        r2 = f2(i)
+        sys.settrace(None)
+        r3 = f3(i)
+
+        if r1 < 0 or r3 < 0:
+            outcome = "FAIL"
+        elif (r1 + r2 + r3) < 0:
+            outcome = "FAIL"
+        elif r1 == 0 and r2 == 0:
+            outcome = "FAIL"
+        else:
+            outcome = "PASS"
+
+        runs.append((i, outcome, coverage))
+    return runs
+
+
 def init_tables(runs):
     # Create empty tuples for each covered line
     tables = {}
@@ -208,15 +233,19 @@ inputs_line = [
     '<a href="foo">foo</a>',
     '""',
     "<p>"]
-runs = run_tests(inputs_line)
-tables = init_tables(runs)
-tables = compute_n(tables)
-print_tables(tables)
+#runs = run_tests(inputs_line)
+#tables = init_tables(runs)
+#tables = compute_n(tables)
+#print_tables(tables)
 
 # These are the input values you should test the mystery function with
 inputs = [
     "aaaaa223%", "aaaaaaaatt41@#", "asdfgh123!", "007001007", "143zxc@#$ab", "3214&*#&!(",
     "qqq1dfjsns", "12345%@afafsaf"]
+runs = run_tests_f2(inputs)
+tables = init_tables(runs)
+tables = compute_n(tables)
+print_tables(tables)
 
 ###### MYSTERY FUNCTION
 returns = []
@@ -247,7 +276,7 @@ def mystery(magic):
     sys.settrace(None)
     tmp.append([func_name, return_arg])
 
-    print magic, r1, r2, r3
+    #print magic, r1, r2, r3
 
     if r1 < 0 or r3 < 0:
         i = "FAIL"
@@ -268,7 +297,8 @@ def mystery(magic):
 
 # Run the mystery function with the inputs
 for i in inputs:
-    print mystery(i)
+    m = mystery(i)
+    #print m
 
 
 #{'n11': 0, 'n10': 0, 'n01': 0, 'n00': 0}
@@ -394,22 +424,24 @@ for func, tables in d.iteritems():
             phi_val = round(phi(*values), 4)
         except:
             phi_val = None
-        print('{0}: {1} phi={2}'.format(func, group, phi_val))
+        #print('{0}: {1} phi={2}'.format(func, group, phi_val))
 
         if phi_val and phi_val > answer_function_phi:
             answer_function_phi = phi_val
             answer_function = func
             answer_bin = group
 
+answer_function = "f2"
+answer_bin = -1
+answer_function_phi = 0.6547
 answer_line_phi = round(answer_function_phi / answer_function_phi, 4)  # precision to 4 decimal places.
+answer_line = ["grade += 1']  # lines of code
+# Define answer line manually after checking the output.
+answer_line = ['elif other < 1:', 'grade -= 1']
 
 # Final answer:
 print answer_function
 print answer_bin
 print answer_function_phi
 print answer_line_phi
-#answer_function = "f2"   # One of f1, f2, f3
-#answer_bin = 1          # One of 1, 0, -1
-#answer_function_phi = 0.6547    # precision to 4 decimal places.
-#answer_line_phi = 1.0000  # precision to 4 decimal places.
-answer_line = ["if False:", 'return "FAIL"']  # lines of code
+print answer_line
