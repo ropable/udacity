@@ -66,6 +66,8 @@ var animate = function(){
     }
     ctx.drawImage(frames[frame_no], 0, 0);
     frame_no++;
+    // Nicer solution:
+    //frame_no = (frame_no + 1) % frames.length;
 };
 
 // We'll call your setup function in our test code, so
