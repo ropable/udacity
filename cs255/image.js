@@ -1,26 +1,29 @@
-setup = function() {
-    var body = document.getElementById('body');
-    var canvas = document.createElement('canvas');
+var canvas = null;
+var ctx = null;
+var img = null;
 
-    var ctx = canvas.getContext('2d');
+var onImageLoad = function(){
+    console.log("IMAGE!!!");
+    // Draw an image to the canvas at position 192,192.
+    // Remember that the drawImage method is attached
+    // to the 2D Context, not the canvas element!
+    ctx.drawImage(img, 192, 192);
+};
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+var setup = function() {
+    var body = document.getElementById("body");
+    canvas = document.createElement("canvas");
+
+    ctx = canvas.getContext('2d');
+
+    canvas.setAttribute('width', 500);
+    canvas.setAttribute('height', 700);
 
     body.appendChild(canvas);
 
-    // Create a new image with:
-    // a 'src' attribute of "/media/img/gamedev/ralphyrobot.png"
-    // and an 'onload' attribute of onImageLoad
     img = new Image();
     img.onload = onImageLoad;
     img.src = "/media/img/gamedev/ralphyrobot.png";
-};
-
-onImageLoad = function(){
-    // Use the console.log function to print a statement to the browser console.
-    // This will print once the image has been downloaded.
-    console.log("Image loaded OK");
 };
 
 // We'll call your setup function in our test code, so
